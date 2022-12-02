@@ -3,6 +3,7 @@ package fun
 import "github.com/gin-gonic/gin"
 
 type JSON map[string]interface{}
+
 type Error string
 
 func (e Error) Error() string {
