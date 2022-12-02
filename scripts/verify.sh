@@ -5,7 +5,7 @@ INSPECT_COVERAGE="${INSPECT_COVERAGE:=false}"
 set -e
 set -x
 
-go vet
+go vet ./...
 go fmt ./...
 
 if [ "$INSPECT_COVERAGE" == "true" ]; then
