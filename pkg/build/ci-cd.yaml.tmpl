@@ -35,7 +35,7 @@ jobs:
       env:
         PROJECT_ID: {{ secret "PROJECT_ID" }}
       run: |-
-        go run build build-artifact {{ .Id }} \
+        go run github.com/itura/fungo/cmd/build@v0.1.4 build-artifact {{ .Id }} \
           --config {{ $.ConfigPath }} \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
@@ -76,7 +76,7 @@ jobs:
         {{ resolveKey . }}: {{ resolveValue . }}
       {{- end }}
       run: |-
-        go run build deploy-application {{ .Id }} \
+        go run github.com/itura/fungo/cmd/build@v0.1.4 deploy-application {{ .Id }} \
           --config {{ $.ConfigPath }} \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
