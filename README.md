@@ -5,7 +5,7 @@ Don't use this in production
 
 Install:
 ```bash
-go get github.com/itura/fungo
+go get github.com/itura/fun@v0.1.7
 ```
 
 Use:

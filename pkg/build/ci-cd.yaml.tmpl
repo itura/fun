@@ -35,7 +35,7 @@ jobs:
       env:
         PROJECT_ID: {{ secret "PROJECT_ID" }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.5 build-artifact {{ .Id }} \
+        go run github.com/itura/fun/cmd/build@v0.1.7 build-artifact {{ .Id }} \
           --config {{ $.ConfigPath }} \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
@@ -76,7 +76,7 @@ jobs:
         {{ resolveKey . }}: {{ resolveValue . }}
       {{- end }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.5 deploy-application {{ .Id }} \
+        go run github.com/itura/fun/cmd/build@v0.1.7 deploy-application {{ .Id }} \
           --config {{ $.ConfigPath }} \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
