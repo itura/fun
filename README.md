@@ -11,7 +11,7 @@ go get github.com/itura/fungo
 Use:
 
 ```go
-package main
+package build
 
 import (
 	"github.com/itura/fungo"

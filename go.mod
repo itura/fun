@@ -3,14 +3,17 @@ module github.com/itura/fungo
 go 1.19
 
 require (
+	github.com/alexflint/go-arg v1.4.3
 	github.com/gin-gonic/gin v1.7.7
 	github.com/stretchr/testify v1.8.0
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.4.5
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.24.2
 )
 
 require (
+	github.com/alexflint/go-scalar v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
@@ -39,5 +42,4 @@ require (
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
