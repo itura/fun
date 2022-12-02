@@ -10,7 +10,10 @@ import (
 )
 
 //go:embed ci-cd.yaml.tmpl
-var content embed.FS
+var ghActionsTemplate embed.FS
+
+//go:embed VERSION
+var versionFile embed.FS
 
 type Pipeline struct {
 	artifactsMap    map[string]Artifact
@@ -18,10 +21,12 @@ type Pipeline struct {
 	ConfigPath      string
 	Artifacts       []Artifact
 	Applications    []Application
+	Name            string
+	Cmd             string
 }
 
-func NewPipeline(configPath string, projectId string, currentSha string, previousSha string) (Pipeline, error) {
-	artifactsMap, applicationsMap, err := parseConfig(configPath, projectId, currentSha, previousSha)
+func NewPipeline(configPath string, projectId string, currentSha string, previousSha string, force bool, self bool) (Pipeline, error) {
+	artifactsMap, applicationsMap, name, err := parseConfig(configPath, projectId, currentSha, previousSha, force)
 	if err != nil {
 		return Pipeline{}, err
 	}
@@ -35,12 +40,25 @@ func NewPipeline(configPath string, projectId string, currentSha string, previou
 		applications = append(applications, v)
 	}
 
+	_version, err := versionFile.ReadFile("VERSION")
+	if err != nil {
+		return Pipeline{}, err
+	}
+	var _cmd string
+	if self {
+		_cmd = "cmd/build/main.go"
+	} else {
+		_cmd = fmt.Sprintf("github.com/itura/fun/cmd/build@%s", _version)
+	}
+
 	return Pipeline{
 		ConfigPath:      configPath,
 		artifactsMap:    artifactsMap,
 		Artifacts:       artifacts,
 		applicationsMap: applicationsMap,
 		Applications:    applications,
+		Name:            name,
+		Cmd:             _cmd,
 	}, nil
 }
 
@@ -69,7 +87,7 @@ func (p Pipeline) DeployApplication(id string) error {
 }
 
 func (p Pipeline) ToGithubActions(outputPath string) error {
-	tplData, err := content.ReadFile("ci-cd.yaml.tmpl")
+	tplData, err := ghActionsTemplate.ReadFile("ci-cd.yaml.tmpl")
 	if err != nil {
 		return err
 	}

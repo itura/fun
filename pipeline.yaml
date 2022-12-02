@@ -1,0 +1,5 @@
+name: fun CI
+artifacts:
+- id: pkg
+  path: .
+  type: lib

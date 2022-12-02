@@ -4,6 +4,22 @@ type ChangeDetection interface {
 	HasChanged() bool
 }
 
+type StaticChangeDetection struct {
+	hasChanged bool
+}
+
+func NewAlwaysChanged() ChangeDetection {
+	return StaticChangeDetection{hasChanged: true}
+}
+
+func NewNeverChanged() ChangeDetection {
+	return StaticChangeDetection{hasChanged: false}
+}
+
+func (c StaticChangeDetection) HasChanged() bool {
+	return c.hasChanged
+}
+
 type GitChangeDetection struct {
 	previousSha string
 	paths       []string

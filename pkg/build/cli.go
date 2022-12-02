@@ -6,6 +6,7 @@ type PipelineCommand interface {
 
 type CommonArgs struct {
 	ConfigPath string `arg:"--config" default:"pipeline.yaml" help:"path to pipeline definition yaml"`
+	Self       bool   `arg:"--self" help:"Run the tool in its own source repo."`
 }
 
 type ActionArgs struct {
@@ -13,10 +14,11 @@ type ActionArgs struct {
 	Id         string `arg:"positional,required"`
 	CurrentSha string `arg:"--current-sha,required" help:"current git sha, used for change detection"`
 	ProjectId  string `arg:"--project-id,required" help:"GCP project id"`
+	Force      bool   `arg:"--force" help:"Ignore change detection"`
 }
 
 func (a ActionArgs) CreatePipeline() (Pipeline, error) {
-	return NewPipeline(a.ConfigPath, a.ProjectId, a.CurrentSha, previousCommit())
+	return NewPipeline(a.ConfigPath, a.ProjectId, a.CurrentSha, previousCommit(), a.Force, a.Self)
 }
 
 type GenerateArgs struct {
@@ -25,7 +27,7 @@ type GenerateArgs struct {
 }
 
 func (g GenerateArgs) CreatePipeline() (Pipeline, error) {
-	return NewPipeline(g.ConfigPath, "", "", "")
+	return NewPipeline(g.ConfigPath, "", "", "", false, g.Self)
 }
 
 type GenerateCommand struct {

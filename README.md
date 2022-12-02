@@ -7,16 +7,16 @@ Don't use this in production
 
 Install:
 ```bash
-go get github.com/itura/fun@v0.1.8
+go get github.com/itura/fun
 ```
 
 Use:
 
 ```go
-package build
+package main
 
 import (
-	"github.com/itura/fun"
+	"github.com/itura/fun/pkg/fun"
 	"log"
 )
 
@@ -33,5 +33,5 @@ func main() {
 ## cmd
 
 ```bash
-go run github.com/itura/fun/cmd/build@v0.1.8
+go run github.com/itura/fun/cmd/build
 ```
