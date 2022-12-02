@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/itura/fungo/pkg/build"
+	"github.com/itura/fun/pkg/build"
 	"os"
 )
 
