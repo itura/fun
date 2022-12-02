@@ -1,4 +1,4 @@
-module github.com/itura/fungo
+module github.com/itura/fun
 
 go 1.19
 
