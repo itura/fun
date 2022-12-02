@@ -88,8 +88,9 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 				AddPaths(spec.Path)
 
 			// todo make agnostic to ordering
-			for _, id := range spec.Dependencies {
+			for _, id := range spec.Artifacts {
 				_cd = _cd.AddPaths(artifacts[id].Path)
+				upstreams = append(upstreams, artifacts[id])
 			}
 			for _, id := range spec.Dependencies {
 				_cd = _cd.AddPaths(applications[id].Path)
