@@ -152,7 +152,7 @@ type HelmDeployment struct {
 	Application
 }
 
-func NewHelmDeployment(a Application) HelmDeployment {
+func NewHelm(a Application) HelmDeployment {
 	return HelmDeployment{
 		Application: a,
 	}
@@ -187,4 +187,33 @@ func (b HelmDeployment) deployApplication() error {
 		args = append(args, "--set", fmt.Sprintf("%s=%s", value.Key, envValue))
 	}
 	return command("helm", args...)
+}
+
+type TfConfig struct {
+	Application
+}
+
+func NewTerraform(a Application) TfConfig {
+	return TfConfig{
+		Application: a,
+	}
+}
+
+func (b TfConfig) Build() error {
+	err := command("terraform", fmt.Sprintf("-chdir=%s", b.Path), "init")
+	if err != nil {
+		return err
+	}
+
+	err = command("terraform", fmt.Sprintf("-chdir=%s", b.Path), "plan", "-out=plan.out")
+	if err != nil {
+		return err
+	}
+
+	err = command("terraform", fmt.Sprintf("-chdir=%s", b.Path), "apply", "plan.out")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

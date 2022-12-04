@@ -20,6 +20,13 @@ var (
 	typeLib   ArtifactType = "lib"
 )
 
+type ApplicationType string
+
+var (
+	typeHelm      ApplicationType = "helm"
+	typeTerraform ApplicationType = "terraform"
+)
+
 type PipelineConfig struct {
 	Name      string
 	Artifacts []struct {
@@ -35,6 +42,7 @@ type PipelineConfig struct {
 		Artifacts    []string
 		Values       []HelmValue
 		Dependencies []string
+		Type         ApplicationType
 	}
 }
 
@@ -67,11 +75,11 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 		}
 
 		artifacts[spec.Id] = Artifact{
+			Type:            spec.Type,
 			Id:              spec.Id,
 			Path:            spec.Path,
 			Project:         projectId,
 			CurrentSha:      currentSha,
-			Type:            spec.Type,
 			hasDependencies: len(spec.Dependencies) > 0,
 			hasChanged:      cd.HasChanged(),
 		}
@@ -101,6 +109,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 
 		hasDependencies := len(spec.Dependencies) > 0 || len(spec.Artifacts) > 0
 		applications[spec.Id] = Application{
+			Type:            spec.Type,
 			Id:              spec.Id,
 			Path:            spec.Path,
 			ProjectId:       projectId,

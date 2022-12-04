@@ -24,10 +24,11 @@ jobs:
         fetch-depth: 2
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.18'
-    - uses: google-github-actions/auth@v0
+        go-version: '1.19'
+    - uses: google-github-actions/auth@v1
       with:
-        credentials_json: {{ secret "SA_KEY" }}
+        workload_identity_provider: {{ secret "WORKLOAD_IDENTITY_PROVIDER" }}
+        service_account: {{ secret "SERVICE_ACCOUNT" }}
     - uses: google-github-actions/setup-gcloud@v0
     - run: gcloud --quiet auth configure-docker
 
@@ -55,20 +56,14 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 2
-    - uses: google-github-actions/auth@v0
+    - uses: google-github-actions/auth@v1
       with:
-        credentials_json: {{ secret "SA_KEY" }}
+        workload_identity_provider: {{ secret "WORKLOAD_IDENTITY_PROVIDER" }}
+        service_account: {{ secret "SERVICE_ACCOUNT" }}
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.18'
-    - uses: google-github-actions/get-gke-credentials@v0
-      with:
-        cluster_name: {{ secret "GKE_CLUSTER" }}
-        location: {{ secret "GKE_LOCATION" }}
-    - uses: azure/setup-helm@v1
-      with:
-        version: v3.10.2
-
+        go-version: '1.19'
+{{ .Setup }}
     - name: Deploy {{ .Id }}
       env:
         PROJECT_ID: {{ secret "PROJECT_ID" }}

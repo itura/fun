@@ -19,13 +19,21 @@ type Application struct {
 	Namespace  string
 	Values     []HelmValue
 	Upstreams  []Job
+	Type       ApplicationType
 
 	hasDependencies bool
 	hasChanged      bool
 }
 
 func (a Application) PrepareBuild() (Build, error) {
-	return NewHelmDeployment(a), nil
+	switch a.Type {
+	case typeHelm:
+		return NewHelm(a), nil
+	case typeTerraform:
+		return NewTerraform(a), nil
+	default:
+		return NullBuild{}, fmt.Errorf("invalid application type %s", a.Type)
+	}
 }
 
 func (a Application) JobId() string {
@@ -34,4 +42,26 @@ func (a Application) JobId() string {
 
 func (a Application) HasDependencies() bool {
 	return a.hasDependencies
+}
+
+func (a Application) Setup() string {
+	if a.Type == typeHelm {
+		return `
+    - uses: google-github-actions/get-gke-credentials@v1
+      with:
+        cluster_name: {{ secret "GKE_CLUSTER" }}
+        location: {{ secret "GKE_LOCATION" }}
+    - uses: azure/setup-helm@v3
+      with:
+        version: v3.10.2
+`
+	} else if a.Type == typeTerraform {
+		return `
+    - uses: 'hashicorp/setup-terraform@v2'
+      with:
+        terraform_version: '1.3.6'
+`
+	} else {
+		return ""
+	}
 }
