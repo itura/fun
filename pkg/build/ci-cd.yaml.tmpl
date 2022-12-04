@@ -12,6 +12,9 @@ jobs:
   {{ .JobId }}:
     name: Build {{ .Id }}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
   {{- if .HasDependencies }}
     needs:
     {{- range .Dependencies }}
@@ -46,6 +49,9 @@ jobs:
   {{ .JobId }}:
     name: Deploy {{ .Id }}
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
   {{- if .HasDependencies }}
     needs:
     {{- range .Upstreams }}
