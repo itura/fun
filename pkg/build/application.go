@@ -1,7 +1,9 @@
 package build
 
 import (
+	"bytes"
 	"fmt"
+	"text/template"
 )
 
 type HelmValue struct {
@@ -45,8 +47,16 @@ func (a Application) HasDependencies() bool {
 }
 
 func (a Application) Setup() string {
+	var err error
+	tpl := template.New("workflow").
+		Funcs(template.FuncMap{
+			"secret":       formatSecretValue,
+			"env":          formatEnvValue,
+			"resolveValue": resolveValue,
+			"resolveKey":   resolveKey,
+		})
 	if a.Type == typeHelm {
-		return `
+		tpl, err = tpl.Parse(`
     - uses: google-github-actions/get-gke-credentials@v1
       with:
         cluster_name: {{ secret "GKE_CLUSTER" }}
@@ -54,7 +64,16 @@ func (a Application) Setup() string {
     - uses: azure/setup-helm@v3
       with:
         version: v3.10.2
-`
+`)
+		if err != nil {
+			panic(err)
+		}
+
+		var result bytes.Buffer
+		if err = tpl.Execute(&result, a); err != nil {
+			panic(err)
+		}
+		return result.String()
 	} else if a.Type == typeTerraform {
 		return `
     - uses: 'hashicorp/setup-terraform@v2'
