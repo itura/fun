@@ -28,5 +28,5 @@ resource "kubernetes_service_account" "sa" {
 }
 
 output "principal" {
-  value = var.workload_identity_namespace ? "serviceAccount:${var.workload_identity_namespace}[${var.namespace}/${var.account_id}]" : ""
+  value = var.workload_identity_namespace != null ? "serviceAccount:${var.workload_identity_namespace}[${var.namespace}/${var.account_id}]" : ""
 }
