@@ -17,6 +17,7 @@ type Application struct {
 	Id         string
 	Path       string
 	ProjectId  string
+	Repository string
 	CurrentSha string
 	Namespace  string
 	Values     []HelmValue

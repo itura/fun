@@ -1,5 +1,8 @@
 name: TMTY CI/CD
 
+resources:
+  artifactRepository: pkg.dev.repo-name
+
 artifacts:
 - id: api
   path: packages/api

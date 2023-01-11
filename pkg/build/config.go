@@ -29,6 +29,9 @@ var (
 
 type PipelineConfig struct {
 	Name      string
+	Resources struct {
+		ArtifactRepository string
+	}
 	Artifacts []struct {
 		Id           string
 		Path         string
@@ -58,6 +61,13 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 		return nil, nil, "", err
 	}
 
+	var repository string
+	if config.Resources.ArtifactRepository != "" {
+		repository = config.Resources.ArtifactRepository
+	} else {
+		repository = projectId
+	}
+
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
 		var cd ChangeDetection
@@ -79,6 +89,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			Id:              spec.Id,
 			Path:            spec.Path,
 			Project:         projectId,
+			Repository:      repository,
 			CurrentSha:      currentSha,
 			hasDependencies: len(spec.Dependencies) > 0,
 			hasChanged:      cd.HasChanged(),
@@ -113,6 +124,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			Id:              spec.Id,
 			Path:            spec.Path,
 			ProjectId:       projectId,
+			Repository:      repository,
 			CurrentSha:      currentSha,
 			Namespace:       spec.Namespace,
 			Values:          spec.Values,

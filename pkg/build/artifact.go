@@ -8,6 +8,7 @@ type Artifact struct {
 	Id         string
 	Path       string
 	Project    string
+	Repository string
 	CurrentSha string
 	Type       ArtifactType
 
@@ -43,7 +44,7 @@ func (a Artifact) VerifyTarget() string {
 }
 
 func (a Artifact) VerifyImageName() string {
-	return fmt.Sprintf("gcr.io/%s/%s-%s:%s", a.Project, a.Id, a.VerifyTarget(), a.CurrentSha)
+	return fmt.Sprintf("%s/%s-%s:%s", a.Repository, a.Id, a.VerifyTarget(), a.CurrentSha)
 }
 
 func (a Artifact) AppTarget() string {
@@ -51,7 +52,7 @@ func (a Artifact) AppTarget() string {
 }
 
 func (a Artifact) AppImageBase() string {
-	return fmt.Sprintf("gcr.io/%s/%s-%s", a.Project, a.Id, a.AppTarget())
+	return fmt.Sprintf("%s/%s-%s", a.Repository, a.Id, a.AppTarget())
 }
 
 func (a Artifact) AppImageName(tag string) string {

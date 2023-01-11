@@ -179,7 +179,7 @@ func (b HelmDeployment) deployApplication() error {
 		"--atomic",
 		"--namespace", b.Namespace,
 		"--timeout", "1m",
-		"--set", fmt.Sprintf("repo=gcr.io/%s", b.ProjectId),
+		"--set", fmt.Sprintf("repo=%s", b.Repository),
 		"--set", fmt.Sprintf("tag=%s", b.CurrentSha),
 	}
 	for _, value := range b.Values {
