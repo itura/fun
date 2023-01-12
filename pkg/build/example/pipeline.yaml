@@ -1,7 +1,9 @@
 name: TMTY CI/CD
 
 resources:
-  artifactRepository: pkg.dev.repo-name
+  artifactRepository:
+    host: us-central1-docker.pkg.dev
+    name: repo-name
 
 artifacts:
 - id: api

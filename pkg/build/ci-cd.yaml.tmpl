@@ -33,7 +33,7 @@ jobs:
         workload_identity_provider: {{ secret "WORKLOAD_IDENTITY_PROVIDER" }}
         service_account: {{ secret "SERVICE_ACCOUNT" }}
     - uses: google-github-actions/setup-gcloud@v0
-    - run: gcloud --quiet auth configure-docker
+    - run: gcloud --quiet auth configure-docker {{ .Host }}
 
     - name: Build {{ .Id }}
       env:

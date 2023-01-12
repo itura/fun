@@ -1,8 +1,10 @@
 package build
 
 import (
-	"gopkg.in/yaml.v3"
+	"fmt"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Preset string
@@ -30,7 +32,10 @@ var (
 type PipelineConfig struct {
 	Name      string
 	Resources struct {
-		ArtifactRepository string
+		ArtifactRepository struct {
+			Host string
+			Name string
+		} `yaml:"artifactRepository"`
 	}
 	Artifacts []struct {
 		Id           string
@@ -61,12 +66,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 		return nil, nil, "", err
 	}
 
-	var repository string
-	if config.Resources.ArtifactRepository != "" {
-		repository = config.Resources.ArtifactRepository
-	} else {
-		repository = projectId
-	}
+	var repository string = fmt.Sprintf("%s/%s/%s", config.Resources.ArtifactRepository.Host, projectId, config.Resources.ArtifactRepository.Name)
 
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
@@ -90,6 +90,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			Path:            spec.Path,
 			Project:         projectId,
 			Repository:      repository,
+			Host:            config.Resources.ArtifactRepository.Host,
 			CurrentSha:      currentSha,
 			hasDependencies: len(spec.Dependencies) > 0,
 			hasChanged:      cd.HasChanged(),

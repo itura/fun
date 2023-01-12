@@ -3,8 +3,9 @@ package build
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/alexflint/go-arg"
 	"os"
+
+	"github.com/alexflint/go-arg"
 )
 
 type argv struct {

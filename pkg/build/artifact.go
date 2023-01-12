@@ -9,6 +9,7 @@ type Artifact struct {
 	Path       string
 	Project    string
 	Repository string
+	Host       string
 	CurrentSha string
 	Type       ArtifactType
 
