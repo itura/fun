@@ -11,6 +11,11 @@ variable "users" {
   default = []
 }
 
+variable "workload_identity_users" {
+  type    = list(string)
+  default = []
+}
+
 variable "token_creators" {
   type    = list(string)
   default = []
@@ -24,8 +29,15 @@ resource "google_service_account" "sa" {
 resource "google_service_account_iam_binding" "users" {
   count              = length(var.users) > 0 ? 1 : 0
   service_account_id = google_service_account.sa.name
-  role               = "roles/iam.workloadIdentityUser"
+  role               = "roles/iam.serviceAccountUser"
   members            = var.users
+}
+
+resource "google_service_account_iam_binding" "workload_identity_users" {
+  count              = length(var.workload_identity_users) > 0 ? 1 : 0
+  service_account_id = google_service_account.sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  members            = var.workload_identity_users
 }
 
 resource "google_service_account_iam_binding" "token_creators" {

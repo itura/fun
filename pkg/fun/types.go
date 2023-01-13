@@ -1,8 +1,35 @@
 package fun
 
-import "github.com/gin-gonic/gin"
+import (
+	"encoding/json"
+	"github.com/gin-gonic/gin"
+)
 
 type JSON map[string]interface{}
+
+func (j JSON) Merge(data ...JSON) JSON {
+	for _, d := range data {
+		for k, v := range d {
+			j[k] = v
+		}
+	}
+	return j
+}
+
+func (j JSON) Marshal() ([]byte, error) {
+	return json.Marshal(j)
+}
+
+//func (j JSON) Get(keys ...string) (interface{}, bool) {
+//	var result interface{}
+//	current := j
+//	for _, key := range keys {
+//		next, present := current[key]
+//		if !present {
+//			return nil, false
+//		}
+//	}
+//}
 
 type Error string
 
