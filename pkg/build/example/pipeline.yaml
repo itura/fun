@@ -4,46 +4,49 @@ resources:
   artifactRepository:
     host: us-central1-docker.pkg.dev
     name: repo-name
+  kubernetesCluster:
+    name: cluster-name
+    location: uscentral1
 
 artifacts:
-- id: api
-  path: packages/api
-  type: app
-- id: client
-  path: packages/client
-  type: app
+  - id: api
+    path: packages/api
+    type: app
+  - id: client
+    path: packages/client
+    type: app
 
 applications:
-- id: infra
-  type: terraform
-  path: tf/main
-- id: db
-  type: helm
-  path: helm/db
-  namespace: app-namespace
-  dependencies:
-  - infra
-  values:
-  - key: postgresql.auth.postgresPassword
-    secretValue: ADMIN_PASSWORD
-  - key: postgresql.auth.password
-    secretValue: TMTY_PASSWORD
-- id: app
-  type: helm
-  path: helm/app
-  namespace: app-namespace
-  artifacts:
-  - client
-  - api
-  dependencies:
-  - infra
-  - db
-  values:
-  - key: client.secrets.clientId
-    secretValue: GOOGLE_CLIENT_ID
-  - key: client.secrets.clientSecret
-    secretValue: GOOGLE_CLIENT_SECRET
-  - key: client.secrets.nextauthUrl
-    secretValue: NEXTAUTH_URL
-  - key: client.secrets.nextauthSecret
-    secretValue: NEXTAUTH_SECRET
+  - id: infra
+    type: terraform
+    path: tf/main
+  - id: db
+    type: helm
+    path: helm/db
+    namespace: app-namespace
+    dependencies:
+      - infra
+    values:
+      - key: postgresql.auth.postgresPassword
+        secretValue: ADMIN_PASSWORD
+      - key: postgresql.auth.password
+        secretValue: TMTY_PASSWORD
+  - id: app
+    type: helm
+    path: helm/app
+    namespace: app-namespace
+    artifacts:
+      - client
+      - api
+    dependencies:
+      - infra
+      - db
+    values:
+      - key: client.secrets.clientId
+        secretValue: GOOGLE_CLIENT_ID
+      - key: client.secrets.clientSecret
+        secretValue: GOOGLE_CLIENT_SECRET
+      - key: client.secrets.nextauthUrl
+        secretValue: NEXTAUTH_URL
+      - key: client.secrets.nextauthSecret
+        secretValue: NEXTAUTH_SECRET

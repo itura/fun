@@ -29,6 +29,11 @@ var (
 	typeTerraform ApplicationType = "terraform"
 )
 
+type ClusterConfig struct {
+	Name     string
+	Location string
+}
+
 type PipelineConfig struct {
 	Name      string
 	Resources struct {
@@ -36,6 +41,8 @@ type PipelineConfig struct {
 			Host string
 			Name string
 		} `yaml:"artifactRepository"`
+
+		KubernetesCluster ClusterConfig `yaml:"kubernetesCluster"`
 	}
 	Artifacts []struct {
 		Id           string
@@ -121,17 +128,18 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 
 		hasDependencies := len(spec.Dependencies) > 0 || len(spec.Artifacts) > 0
 		applications[spec.Id] = Application{
-			Type:            spec.Type,
-			Id:              spec.Id,
-			Path:            spec.Path,
-			ProjectId:       projectId,
-			Repository:      repository,
-			CurrentSha:      currentSha,
-			Namespace:       spec.Namespace,
-			Values:          spec.Values,
-			Upstreams:       upstreams,
-			hasDependencies: hasDependencies,
-			hasChanged:      cd.HasChanged(),
+			Type:              spec.Type,
+			Id:                spec.Id,
+			Path:              spec.Path,
+			ProjectId:         projectId,
+			Repository:        repository,
+			CurrentSha:        currentSha,
+			Namespace:         spec.Namespace,
+			Values:            spec.Values,
+			Upstreams:         upstreams,
+			hasDependencies:   hasDependencies,
+			KubernetesCluster: config.Resources.KubernetesCluster,
+			hasChanged:        cd.HasChanged(),
 		}
 	}
 

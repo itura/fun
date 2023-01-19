@@ -1,9 +1,7 @@
 package build
 
 import (
-	"bytes"
 	"fmt"
-	"text/template"
 )
 
 type HelmValue struct {
@@ -14,15 +12,16 @@ type HelmValue struct {
 }
 
 type Application struct {
-	Id         string
-	Path       string
-	ProjectId  string
-	Repository string
-	CurrentSha string
-	Namespace  string
-	Values     []HelmValue
-	Upstreams  []Job
-	Type       ApplicationType
+	Id                string
+	Path              string
+	ProjectId         string
+	Repository        string
+	KubernetesCluster ClusterConfig
+	CurrentSha        string
+	Namespace         string
+	Values            []HelmValue
+	Upstreams         []Job
+	Type              ApplicationType
 
 	hasDependencies bool
 	hasChanged      bool
@@ -48,33 +47,18 @@ func (a Application) HasDependencies() bool {
 }
 
 func (a Application) Setup() string {
-	var err error
-	tpl := template.New("workflow").
-		Funcs(template.FuncMap{
-			"secret":       formatSecretValue,
-			"env":          formatEnvValue,
-			"resolveValue": resolveValue,
-			"resolveKey":   resolveKey,
-		})
+
 	if a.Type == typeHelm {
-		tpl, err = tpl.Parse(`
+
+		return fmt.Sprintf(`
     - uses: google-github-actions/get-gke-credentials@v1
       with:
-        cluster_name: {{ secret "GKE_CLUSTER" }}
-        location: {{ secret "GKE_LOCATION" }}
+        cluster_name: %s
+        location: %s
     - uses: azure/setup-helm@v3
       with:
         version: v3.10.2
-`)
-		if err != nil {
-			panic(err)
-		}
-
-		var result bytes.Buffer
-		if err = tpl.Execute(&result, a); err != nil {
-			panic(err)
-		}
-		return result.String()
+`, a.KubernetesCluster.Name, a.KubernetesCluster.Location)
 	} else if a.Type == typeTerraform {
 		return `
     - uses: 'hashicorp/setup-terraform@v2'
