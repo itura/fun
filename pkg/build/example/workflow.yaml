@@ -32,7 +32,7 @@ jobs:
       env:
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.17 build-artifact api \
+        go run github.com/itura/fun/cmd/build@v0.1.18 build-artifact api \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
@@ -61,7 +61,7 @@ jobs:
       env:
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.17 build-artifact client \
+        go run github.com/itura/fun/cmd/build@v0.1.18 build-artifact client \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
@@ -92,7 +92,7 @@ jobs:
       env:
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.17 deploy-application infra \
+        go run github.com/itura/fun/cmd/build@v0.1.18 deploy-application infra \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
@@ -130,7 +130,7 @@ jobs:
         postgresql_auth_postgresPassword: ${{ secrets.ADMIN_PASSWORD }}
         postgresql_auth_password: ${{ secrets.TMTY_PASSWORD }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.17 deploy-application db \
+        go run github.com/itura/fun/cmd/build@v0.1.18 deploy-application db \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
@@ -173,7 +173,7 @@ jobs:
         client_secrets_nextauthUrl: ${{ secrets.NEXTAUTH_URL }}
         client_secrets_nextauthSecret: ${{ secrets.NEXTAUTH_SECRET }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.17 deploy-application app \
+        go run github.com/itura/fun/cmd/build@v0.1.18 deploy-application app \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID

@@ -178,7 +178,6 @@ func (b HelmDeployment) deployApplication() error {
 		"--install",
 		"--atomic",
 		"--namespace", b.Namespace,
-		"--timeout", "1m",
 		"--set", fmt.Sprintf("repo=%s", b.Repository),
 		"--set", fmt.Sprintf("tag=%s", b.CurrentSha),
 	}
