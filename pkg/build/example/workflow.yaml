@@ -32,7 +32,7 @@ jobs:
       env:
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.18 build-artifact api \
+        go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact api \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
@@ -61,79 +61,11 @@ jobs:
       env:
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.18 build-artifact client \
+        go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact client \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
 
-  deploy-infra:
-    name: Deploy infra
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 2
-    - uses: google-github-actions/auth@v1
-      with:
-        workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-        service_account: ${{ secrets.SERVICE_ACCOUNT }}
-    - uses: actions/setup-go@v3
-      with:
-        go-version: '1.19'
-
-    - uses: 'hashicorp/setup-terraform@v2'
-      with:
-        terraform_version: '1.3.6'
-
-    - name: Deploy infra
-      env:
-        PROJECT_ID: ${{ secrets.PROJECT_ID }}
-      run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.18 deploy-application infra \
-          --config pkg/build/example/pipeline.yaml \
-          --current-sha $GITHUB_SHA \
-          --project-id $PROJECT_ID
-  deploy-db:
-    name: Deploy db
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    needs:
-    - deploy-infra
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 2
-    - uses: google-github-actions/auth@v1
-      with:
-        workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-        service_account: ${{ secrets.SERVICE_ACCOUNT }}
-    - uses: actions/setup-go@v3
-      with:
-        go-version: '1.19'
-
-    - uses: google-github-actions/get-gke-credentials@v1
-      with:
-        cluster_name: cluster-name
-        location: uscentral1
-    - uses: azure/setup-helm@v3
-      with:
-        version: v3.10.2
-
-    - name: Deploy db
-      env:
-        PROJECT_ID: ${{ secrets.PROJECT_ID }}
-        postgresql_auth_postgresPassword: ${{ secrets.ADMIN_PASSWORD }}
-        postgresql_auth_password: ${{ secrets.TMTY_PASSWORD }}
-      run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.18 deploy-application db \
-          --config pkg/build/example/pipeline.yaml \
-          --current-sha $GITHUB_SHA \
-          --project-id $PROJECT_ID
   deploy-app:
     name: Deploy app
     runs-on: ubuntu-latest
@@ -173,7 +105,75 @@ jobs:
         client_secrets_nextauthUrl: ${{ secrets.NEXTAUTH_URL }}
         client_secrets_nextauthSecret: ${{ secrets.NEXTAUTH_SECRET }}
       run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.18 deploy-application app \
+        go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application app \
+          --config pkg/build/example/pipeline.yaml \
+          --current-sha $GITHUB_SHA \
+          --project-id $PROJECT_ID
+  deploy-infra:
+    name: Deploy infra
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+    - uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.SERVICE_ACCOUNT }}
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.19'
+
+    - uses: 'hashicorp/setup-terraform@v2'
+      with:
+        terraform_version: '1.3.6'
+
+    - name: Deploy infra
+      env:
+        PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      run: |-
+        go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application infra \
+          --config pkg/build/example/pipeline.yaml \
+          --current-sha $GITHUB_SHA \
+          --project-id $PROJECT_ID
+  deploy-db:
+    name: Deploy db
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs:
+    - deploy-infra
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+    - uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.SERVICE_ACCOUNT }}
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.19'
+
+    - uses: google-github-actions/get-gke-credentials@v1
+      with:
+        cluster_name: cluster-name
+        location: uscentral1
+    - uses: azure/setup-helm@v3
+      with:
+        version: v3.10.2
+
+    - name: Deploy db
+      env:
+        PROJECT_ID: ${{ secrets.PROJECT_ID }}
+        postgresql_auth_postgresPassword: ${{ secrets.ADMIN_PASSWORD }}
+        postgresql_auth_password: ${{ secrets.TMTY_PASSWORD }}
+      run: |-
+        go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
