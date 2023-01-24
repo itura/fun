@@ -7,6 +7,13 @@ resources:
   kubernetesCluster:
     name: cluster-name
     location: uscentral1
+  secretProviders:
+    github:
+      type: github-actions
+    princess-pup:
+      type: gcp
+      config:
+        project: princess-pup
 
 artifacts:
   - id: api
@@ -27,10 +34,15 @@ applications:
     dependencies:
       - infra
     values:
-      - key: postgresql.auth.postgresPassword
-        secretValue: ADMIN_PASSWORD
-      - key: postgresql.auth.password
-        secretValue: TMTY_PASSWORD
+      - key: postgresql.dbName
+        value: my-db
+    secrets:
+      - helmKey: postgresql.auth.postgresPassword
+        secretName: pg-admin-password
+        provider: github
+      - helmKey: postgresql.auth.password
+        secretName: pg-password
+        provider: github
   - id: app
     type: helm
     path: helm/app
@@ -42,11 +54,18 @@ applications:
       - infra
       - db
     values:
-      - key: client.secrets.clientId
-        secretValue: GOOGLE_CLIENT_ID
-      - key: client.secrets.clientSecret
-        secretValue: GOOGLE_CLIENT_SECRET
-      - key: client.secrets.nextauthUrl
-        secretValue: NEXTAUTH_URL
-      - key: client.secrets.nextauthSecret
-        secretValue: NEXTAUTH_SECRET
+      - key: app-name
+        value: my-app
+    secrets:
+      - helmKey: client.secrets.clientId
+        secretName: client-id
+        provider: princess-pup
+      - helmKey: client.secrets.clientSecret
+        secretName: client-secret
+        provider: princess-pup
+      - helmKey: client.secrets.nextAuthUrl
+        secretName: next-auth-url
+        provider: princess-pup
+      - helmKey: client.secrets.nextAuthSecret
+        secretName: next-auth-secret
+        provider: princess-pup

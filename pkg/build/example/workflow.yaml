@@ -66,6 +66,43 @@ jobs:
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID
 
+  deploy-db:
+    name: Deploy db
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs:
+    - deploy-infra
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+    - uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.SERVICE_ACCOUNT }}
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.19'
+
+    - uses: google-github-actions/get-gke-credentials@v1
+      with:
+        cluster_name: cluster-name
+        location: uscentral1
+    - uses: azure/setup-helm@v3
+      with:
+        version: v3.10.2
+
+    - name: Deploy db
+      env:
+        PROJECT_ID: ${{ secrets.PROJECT_ID }}
+        postgresql_dbName: my-db
+      run: |-
+        go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \
+          --config pkg/build/example/pipeline.yaml \
+          --current-sha $GITHUB_SHA \
+          --project-id $PROJECT_ID
   deploy-app:
     name: Deploy app
     runs-on: ubuntu-latest
@@ -100,10 +137,7 @@ jobs:
     - name: Deploy app
       env:
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
-        client_secrets_clientId: ${{ secrets.GOOGLE_CLIENT_ID }}
-        client_secrets_clientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-        client_secrets_nextauthUrl: ${{ secrets.NEXTAUTH_URL }}
-        client_secrets_nextauthSecret: ${{ secrets.NEXTAUTH_SECRET }}
+        app-name: my-app
       run: |-
         go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application app \
           --config pkg/build/example/pipeline.yaml \
@@ -136,44 +170,6 @@ jobs:
         PROJECT_ID: ${{ secrets.PROJECT_ID }}
       run: |-
         go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application infra \
-          --config pkg/build/example/pipeline.yaml \
-          --current-sha $GITHUB_SHA \
-          --project-id $PROJECT_ID
-  deploy-db:
-    name: Deploy db
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    needs:
-    - deploy-infra
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 2
-    - uses: google-github-actions/auth@v1
-      with:
-        workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-        service_account: ${{ secrets.SERVICE_ACCOUNT }}
-    - uses: actions/setup-go@v3
-      with:
-        go-version: '1.19'
-
-    - uses: google-github-actions/get-gke-credentials@v1
-      with:
-        cluster_name: cluster-name
-        location: uscentral1
-    - uses: azure/setup-helm@v3
-      with:
-        version: v3.10.2
-
-    - name: Deploy db
-      env:
-        PROJECT_ID: ${{ secrets.PROJECT_ID }}
-        postgresql_auth_postgresPassword: ${{ secrets.ADMIN_PASSWORD }}
-        postgresql_auth_password: ${{ secrets.TMTY_PASSWORD }}
-      run: |-
-        go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \
           --config pkg/build/example/pipeline.yaml \
           --current-sha $GITHUB_SHA \
           --project-id $PROJECT_ID

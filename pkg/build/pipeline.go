@@ -94,10 +94,9 @@ func (p Pipeline) ToGithubActions(outputPath string) error {
 
 	tpl, err := template.New("workflow").
 		Funcs(template.FuncMap{
-			"secret":       formatSecretValue,
-			"env":          formatEnvValue,
-			"resolveValue": resolveValue,
-			"resolveKey":   resolveKey,
+			"secret":     formatSecretValue,
+			"env":        formatEnvValue,
+			"resolveKey": resolveKey,
 		}).
 		Parse(string(tplData))
 	if err != nil {
@@ -111,18 +110,6 @@ func (p Pipeline) ToGithubActions(outputPath string) error {
 	}
 
 	return os.WriteFile(outputPath, buffer.Bytes(), 0644)
-}
-
-func resolveValue(value HelmValue) string {
-	if value.Value != "" {
-		return value.Value
-	} else if value.SecretValue != "" {
-		return formatSecretValue(value.SecretValue)
-	} else if value.EnvValue != "" {
-		return formatEnvValue(value.SecretValue)
-	} else {
-		return ""
-	}
 }
 
 func resolveKey(value HelmValue) string {

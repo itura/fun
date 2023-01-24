@@ -5,10 +5,14 @@ import (
 )
 
 type HelmValue struct {
-	Key         string
-	Value       string
-	SecretValue string `yaml:"secretValue"`
-	EnvValue    string `yaml:"envValue"`
+	Key   string
+	Value string
+}
+
+type HelmSecretValue struct {
+	HelmKey    string
+	SecretName string
+	Provider   SecretProvider
 }
 
 type Application struct {
@@ -22,9 +26,9 @@ type Application struct {
 	Values            []HelmValue
 	Upstreams         []Job
 	Type              ApplicationType
-
-	hasDependencies bool
-	hasChanged      bool
+	Secrets           []HelmSecretValue
+	hasDependencies   bool
+	hasChanged        bool
 }
 
 func (a Application) PrepareBuild() (Build, error) {

@@ -1,6 +1,7 @@
 package build
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -34,6 +35,11 @@ type ClusterConfig struct {
 	Location string
 }
 
+type SecretProvider struct {
+	Type   string
+	Config map[string]string
+}
+
 type PipelineConfig struct {
 	Name      string
 	Resources struct {
@@ -42,7 +48,8 @@ type PipelineConfig struct {
 			Name string
 		} `yaml:"artifactRepository"`
 
-		KubernetesCluster ClusterConfig `yaml:"kubernetesCluster"`
+		KubernetesCluster ClusterConfig             `yaml:"kubernetesCluster"`
+		SecretProviders   map[string]SecretProvider `yaml:"secretProviders"`
 	}
 	Artifacts []struct {
 		Id           string
@@ -51,11 +58,16 @@ type PipelineConfig struct {
 		Type         ArtifactType
 	}
 	Applications []struct {
-		Id           string
-		Path         string
-		Namespace    string
-		Artifacts    []string
-		Values       []HelmValue
+		Id        string
+		Path      string
+		Namespace string
+		Artifacts []string
+		Values    []HelmValue
+		Secrets   []struct {
+			HelmKey    string `yaml:"helmKey"`
+			SecretName string `yaml:"secretName"`
+			Provider   string
+		}
 		Dependencies []string
 		Type         ApplicationType
 	}
@@ -74,6 +86,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 	}
 
 	var repository string = fmt.Sprintf("%s/%s/%s", config.Resources.ArtifactRepository.Host, projectId, config.Resources.ArtifactRepository.Name)
+	var providerConfigs map[string]SecretProvider = config.Resources.SecretProviders
 
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
@@ -126,6 +139,25 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			cd = _cd
 		}
 
+		var secretConfigs = spec.Secrets
+
+		helmSecretValues := make([]HelmSecretValue, len(secretConfigs))
+		for i, secretConfig := range secretConfigs {
+			provider, ok := providerConfigs[secretConfig.Provider]
+
+			if !ok {
+				return nil, nil, "", errors.New("Invalid secret provider reference")
+			}
+
+			helmSecretValue := HelmSecretValue{
+				HelmKey:    secretConfig.HelmKey,
+				SecretName: secretConfig.SecretName,
+				Provider:   provider,
+			}
+
+			helmSecretValues[i] = helmSecretValue
+		}
+
 		hasDependencies := len(spec.Dependencies) > 0 || len(spec.Artifacts) > 0
 		applications[spec.Id] = Application{
 			Type:              spec.Type,
@@ -139,6 +171,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			Upstreams:         upstreams,
 			hasDependencies:   hasDependencies,
 			KubernetesCluster: config.Resources.KubernetesCluster,
+			Secrets:           helmSecretValues,
 			hasChanged:        cd.HasChanged(),
 		}
 	}
