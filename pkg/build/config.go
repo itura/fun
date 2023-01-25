@@ -30,13 +30,20 @@ var (
 	typeTerraform ApplicationType = "terraform"
 )
 
+type SecretProviderType string
+
+var (
+	typeGcp    SecretProviderType = "gcp"
+	typeGithub SecretProviderType = "github-actions"
+)
+
 type ClusterConfig struct {
 	Name     string
 	Location string
 }
 
 type SecretProvider struct {
-	Type   string
+	Type   SecretProviderType
 	Config map[string]string
 }
 
@@ -89,6 +96,13 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 
 	var repository string = fmt.Sprintf("%s/%s/%s", config.Resources.ArtifactRepository.Host, projectId, config.Resources.ArtifactRepository.Name)
 	var providerConfigs map[string]SecretProvider = config.Resources.SecretProviders
+
+	// TODO extract
+	for _, provider := range providerConfigs {
+		if provider.Type != typeGcp && provider.Type != typeGithub {
+			return nil, nil, "", InvalidSecretProviderType{GivenType: string(provider.Type)}
+		}
+	}
 
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
@@ -148,7 +162,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			provider, ok := providerConfigs[secretConfig.Provider]
 
 			if !ok {
-				return nil, nil, "", &InvalidSecretProvider{}
+				return nil, nil, "", MissingSecretProvider{}
 			}
 
 			helmSecretValue := HelmSecretValue{

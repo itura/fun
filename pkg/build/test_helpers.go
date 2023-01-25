@@ -47,7 +47,7 @@ func getHelmApplication() Application {
 				HelmKey:    "postgresql.auth.password",
 				SecretName: "pg-password",
 				Provider: SecretProvider{
-					Type:   "github-actions",
+					Type:   SecretProviderType("github-actions"),
 					Config: nil,
 				},
 			},

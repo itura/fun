@@ -1,6 +1,7 @@
 package build
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -36,12 +37,28 @@ func TestParseConfig(t *testing.T) {
 				PreviousSha: "previousSha",
 				Force:       false,
 			},
-			name: "InvalidSecretProvider",
+			name: "MissingSecretProvider",
 			expectedOutputs: ParseConfigOutputs{
 				Artifacts:    nil,
 				Applications: nil,
 				BuildName:    "",
-				Error:        &InvalidSecretProvider{},
+				Error:        MissingSecretProvider{},
+			},
+		},
+		{
+			fixture: "test_fixtures/invalid_secret_provider.yaml",
+			arguments: InputArguments{
+				ProjectId:   "projectId",
+				CurrentSha:  "currentSha",
+				PreviousSha: "previousSha",
+				Force:       false,
+			},
+			name: "InvalidSecretProviderType",
+			expectedOutputs: ParseConfigOutputs{
+				Artifacts:    nil,
+				Applications: nil,
+				BuildName:    "",
+				Error:        InvalidSecretProviderType{GivenType: "aws"},
 			},
 		},
 	}
@@ -55,8 +72,8 @@ func TestParseConfig(t *testing.T) {
 				tc.arguments.Force,
 			)
 
-			if err != tc.expectedOutputs.Error {
-				t.Fatalf("Expected error %v but got %v", tc.expectedOutputs.Error, err)
+			if !errors.Is(err, tc.expectedOutputs.Error) {
+				t.Fatalf("Expected error '%v' but got '%v'", tc.expectedOutputs.Error, err)
 			}
 
 			if name != tc.expectedOutputs.BuildName {
