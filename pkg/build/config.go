@@ -40,6 +40,12 @@ type SecretProvider struct {
 	Config map[string]string
 }
 
+type SecretConfig struct {
+	HelmKey    string "yaml:\"helmKey\""
+	SecretName string "yaml:\"secretName\""
+	Provider   string
+}
+
 type PipelineConfig struct {
 	Name      string
 	Resources struct {
@@ -58,16 +64,12 @@ type PipelineConfig struct {
 		Type         ArtifactType
 	}
 	Applications []struct {
-		Id        string
-		Path      string
-		Namespace string
-		Artifacts []string
-		Values    []HelmValue
-		Secrets   []struct {
-			HelmKey    string `yaml:"helmKey"`
-			SecretName string `yaml:"secretName"`
-			Provider   string
-		}
+		Id           string
+		Path         string
+		Namespace    string
+		Artifacts    []string
+		Values       []HelmValue
+		Secrets      []SecretConfig
 		Dependencies []string
 		Type         ApplicationType
 	}
@@ -146,7 +148,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			provider, ok := providerConfigs[secretConfig.Provider]
 
 			if !ok {
-				return nil, nil, "", errors.New("Invalid secret provider reference")
+				return nil, nil, "", &InvalidSecretProvider{}
 			}
 
 			helmSecretValue := HelmSecretValue{
@@ -177,4 +179,25 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 	}
 
 	return artifacts, applications, config.Name, nil
+}
+
+func parseSecrets(secretConfigs []SecretConfig, secretProviderConfigs map[string]SecretProvider) ([]HelmSecretValue, error) {
+
+	helmSecretValues := make([]HelmSecretValue, len(secretConfigs))
+	for i, secretConfig := range secretConfigs {
+		provider, ok := secretProviderConfigs[secretConfig.Provider]
+
+		if !ok {
+			return helmSecretValues, errors.New("Invalid secret provider reference")
+		}
+
+		helmSecretValue := HelmSecretValue{
+			HelmKey:    secretConfig.HelmKey,
+			SecretName: secretConfig.SecretName,
+			Provider:   provider,
+		}
+
+		helmSecretValues[i] = helmSecretValue
+	}
+	return helmSecretValues, nil
 }
