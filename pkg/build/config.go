@@ -1,7 +1,6 @@
 package build
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -157,9 +156,9 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 
 		var secretConfigs = spec.Secrets
 
-		helmSecretValues := make([]HelmSecretValue, len(secretConfigs))
-		for i, secretConfig := range secretConfigs {
-			provider, ok := providerConfigs[secretConfig.Provider]
+		helmSecretValues := make(map[string][]HelmSecretValue, len(secretConfigs))
+		for _, secretConfig := range secretConfigs {
+			_, ok := providerConfigs[secretConfig.Provider]
 
 			if !ok {
 				return nil, nil, "", MissingSecretProvider{}
@@ -168,10 +167,10 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			helmSecretValue := HelmSecretValue{
 				HelmKey:    secretConfig.HelmKey,
 				SecretName: secretConfig.SecretName,
-				Provider:   provider,
 			}
 
-			helmSecretValues[i] = helmSecretValue
+			providerSecretsList := helmSecretValues[secretConfig.Provider]
+			helmSecretValues[secretConfig.Provider] = append(providerSecretsList, helmSecretValue)
 		}
 
 		hasDependencies := len(spec.Dependencies) > 0 || len(spec.Artifacts) > 0
@@ -188,30 +187,10 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			hasDependencies:   hasDependencies,
 			KubernetesCluster: config.Resources.KubernetesCluster,
 			Secrets:           helmSecretValues,
+			SecretProviders:   providerConfigs,
 			hasChanged:        cd.HasChanged(),
 		}
 	}
 
 	return artifacts, applications, config.Name, nil
-}
-
-func parseSecrets(secretConfigs []SecretConfig, secretProviderConfigs map[string]SecretProvider) ([]HelmSecretValue, error) {
-
-	helmSecretValues := make([]HelmSecretValue, len(secretConfigs))
-	for i, secretConfig := range secretConfigs {
-		provider, ok := secretProviderConfigs[secretConfig.Provider]
-
-		if !ok {
-			return helmSecretValues, errors.New("Invalid secret provider reference")
-		}
-
-		helmSecretValue := HelmSecretValue{
-			HelmKey:    secretConfig.HelmKey,
-			SecretName: secretConfig.SecretName,
-			Provider:   provider,
-		}
-
-		helmSecretValues[i] = helmSecretValue
-	}
-	return helmSecretValues, nil
 }

@@ -8,8 +8,6 @@ resources:
     name: cluster-name
     location: uscentral1
   secretProviders:
-    github:
-      type: github-actions
     princess-pup:
       type: gcp
       config:
@@ -31,4 +29,4 @@ applications:
     secrets:
       - helmKey: postgresql.auth.password
         secretName: pg-password
-        provider: github
+        provider: princess-pup

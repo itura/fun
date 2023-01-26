@@ -42,14 +42,18 @@ func getHelmApplication() Application {
 		},
 		Upstreams: nil,
 		Type:      ApplicationType("helm"),
-		Secrets: []HelmSecretValue{
-			{
-				HelmKey:    "postgresql.auth.password",
-				SecretName: "pg-password",
-				Provider: SecretProvider{
-					Type:   SecretProviderType("github-actions"),
-					Config: nil,
+		Secrets: map[string][]HelmSecretValue{
+			"princess-pup": {
+				{
+					HelmKey:    "postgresql.auth.password",
+					SecretName: "pg-password",
 				},
+			},
+		},
+		SecretProviders: map[string]SecretProvider{
+			"princess-pup": {
+				Type:   SecretProviderType("gcp"),
+				Config: map[string]string{"project": "princess-pup"},
 			},
 		},
 		hasDependencies: false,
