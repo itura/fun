@@ -8,7 +8,7 @@ func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
 				Branches: []string{"trunk"},
 			},
 		},
-		Jobs: p.ArtifactsMapToGitHubActionsJobs(),
+		Jobs: p.ArtifactsAndAppsToGitHubActionsJobs(),
 	}
 
 	// TODO
@@ -17,10 +17,15 @@ func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
 
 }
 
-func (p Pipeline) ArtifactsMapToGitHubActionsJobs() map[string]GitHubActionsJob {
+func (p Pipeline) ArtifactsAndAppsToGitHubActionsJobs() map[string]GitHubActionsJob {
 	jobs := map[string]GitHubActionsJob{}
+
 	for id, artifact := range p.artifactsMap {
 		jobs["build-"+id] = artifact.ToGitHubActionsJob()
 	}
+	for id, app := range p.applicationsMap {
+		jobs["deploy-"+id] = app.ToGitHubActionsJob()
+	}
+
 	return jobs
 }

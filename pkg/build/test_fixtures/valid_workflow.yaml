@@ -41,35 +41,41 @@ jobs:
       #       --current-sha $GITHUB_SHA \
       #       --project-id $PROJECT_ID
 
-  # deploy-db:
-  #   name: Deploy db
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     id-token: write
-  #     contents: read
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         fetch-depth: 2
-  #     - uses: google-github-actions/auth@v1
-  #       with:
-  #         workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-  #         service_account: ${{ secrets.SERVICE_ACCOUNT }}
-  #     - uses: actions/setup-go@v3
-  #       with:
-  #         go-version: "1.19"
-  #     - uses: google-github-actions/get-gke-credentials@v1
-  #       with:
-  #         cluster_name: cluster-name
-  #         location: uscentral1
-  #     - uses: azure/setup-helm@v3
-  #       with:
-  #         version: v3.10.2
-  #     - id: secrets-princess-pup
-  #       uses: google-github-actions/get-secretmanager-secrets@v1
-  #       with:
-  #         secrets: |-
-  #           pg-password:princess-pup/pg-password
+  deploy-db:
+    name: Deploy db
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Authenticate to GCloud via Service Account
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: TODO
+          service_account: TODO
+      - name: Authenticate to GKE Cluster
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: cluster-name
+          location: uscentral1
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.2
+      - name: Get Secrets from GCP Provider princess-pup
+        id: secrets-princess-pup
+        uses: google-github-actions/get-secretmanager-secrets@v1
+        with:
+          secrets: |-
+            pg-password:princess-pup/pg-password
 
   #     - name: Deploy db
   #       env:
