@@ -26,7 +26,14 @@ func TestWorkflowGeneration(t *testing.T) {
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)
 	assert.Nil(t, err)
 
-	parsedConfig := SuccessfulParse("My Build", getValidArtifacts(), getValidApplications())
+	builder := NewTestBuilder("projectId", "currentSha")
+	parsedConfig := SuccessfulParse(
+		"My Build",
+		map[string]Artifact{
+			"api": builder.Artifact("api", "packages/api"),
+		},
+		map[string]Application{},
+	)
 	pipeline := NewPipeline(parsedConfig, "test_fixtures/pipeline_config_pass.yaml", "generate")
 
 	workflow := pipeline.ToGitHubWorkflow()

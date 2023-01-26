@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/itura/fun/pkg/fun"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -41,10 +42,17 @@ type ClusterConfig struct {
 	Location string
 }
 
+type ArtifactRepository struct {
+	Host string
+	Name string
+}
+
 type SecretProvider struct {
 	Type   SecretProviderType
 	Config map[string]string
 }
+
+type SecretProviders fun.Config[SecretProvider]
 
 type SecretConfig struct {
 	HelmKey    string "yaml:\"helmKey\""
@@ -55,13 +63,9 @@ type SecretConfig struct {
 type PipelineConfig struct {
 	Name      string
 	Resources struct {
-		ArtifactRepository struct {
-			Host string
-			Name string
-		} `yaml:"artifactRepository"`
-
-		KubernetesCluster ClusterConfig             `yaml:"kubernetesCluster"`
-		SecretProviders   map[string]SecretProvider `yaml:"secretProviders"`
+		ArtifactRepository ArtifactRepository `yaml:"artifactRepository"`
+		KubernetesCluster  ClusterConfig      `yaml:"kubernetesCluster"`
+		SecretProviders    SecretProviders    `yaml:"secretProviders"`
 	}
 	Artifacts []struct {
 		Id           string

@@ -81,6 +81,26 @@ func (a Application) Setup() string {
 	}
 }
 
+func (a Application) AddValue(key, value string) Application {
+	a.Values = append(a.Values, HelmValue{
+		Key:   key,
+		Value: value,
+	})
+	return a
+}
+
+func (a Application) SetSecret(key, provider, name string) Application {
+	value, present := a.Secrets[provider]
+	if !present {
+		value = []HelmSecretValue{}
+	}
+	a.Secrets[provider] = append(value, HelmSecretValue{
+		HelmKey:    key,
+		SecretName: name,
+	})
+	return a
+}
+
 func GenerateGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string][]HelmSecretValue) (string, error) {
 	if len(secrets) == 0 {
 		return "", nil
