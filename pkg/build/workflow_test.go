@@ -9,6 +9,7 @@ import (
 )
 
 func TestWorkflowGeneration(t *testing.T) {
+	builder := NewTestBuilder("projectId", "currentSha")
 	expectedYamlBytes, _ := os.ReadFile("test_fixtures/valid_workflow.yaml")
 	expectedWorkflow := GitHubActionsWorkflow{
 		Name: "My Build",
@@ -20,13 +21,13 @@ func TestWorkflowGeneration(t *testing.T) {
 			},
 		},
 		Jobs: map[string]GitHubActionsJob{
-			"build-api": getAppArtifact().ToGitHubActionsJob(),
+			"build-api": builder.Artifact("api", "packages/api").
+				ToGitHubActionsJob(),
 		},
 	}
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)
 	assert.Nil(t, err)
 
-	builder := NewTestBuilder("projectId", "currentSha")
 	parsedConfig := SuccessfulParse(
 		"My Build",
 		map[string]Artifact{

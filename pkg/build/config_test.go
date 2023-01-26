@@ -22,10 +22,7 @@ func TestParseConfig(t *testing.T) {
 					"client": builder.Artifact("client", "packages/client"),
 				},
 				map[string]Application{
-					"db": builder.Application("db", "helm/db").
-						AddValue("postgresql.dbName", "my-db").
-						SetSecret("postgresql.auth.password", "princess-pup", "pg-password").
-						SetSecret("postgresql.auth.username", "github", "pg-username"),
+					"db": PostgresHelmChart(builder),
 				},
 			),
 		},
