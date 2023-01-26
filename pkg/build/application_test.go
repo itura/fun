@@ -3,6 +3,8 @@ package build
 import (
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var steps = []GitHubActionsStep{
@@ -22,7 +24,7 @@ var steps = []GitHubActionsStep{
 		},
 	},
 	{
-		Id:   "secrets",
+		Id:   "secrets-princess-pup",
 		Uses: "google-github-actions/get-secretmanager-secrets@v1",
 		With: map[string]string{
 			"secrets": `
@@ -60,4 +62,16 @@ func TestMarshalAndIndentSteps(t *testing.T) {
 		t.Fatalf("Expected marshaled GHA steps to be \n`%s`\nBut got \n`%s`\ninstead", expectedYamlStr, stepsYamlStr)
 	}
 
+}
+
+func TestResolveSecrets(t *testing.T) {
+	app := getHelmApplication()
+	expectedSecretMappings := map[string]string{
+		"postgresql_auth_password": "${{ steps.secrets-princess-pup.outputs.pg-password }}",
+		"postgresql_auth_username": "${{ secrets.pg-username }}",
+	}
+
+	resolvedSecrets := app.ResolveSecrets()
+
+	assert.Equal(t, expectedSecretMappings, resolvedSecrets)
 }

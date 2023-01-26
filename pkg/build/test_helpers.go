@@ -42,18 +42,15 @@ func getHelmApplication() Application {
 		},
 		Upstreams: nil,
 		Type:      ApplicationType("helm"),
-		Secrets: map[string][]HelmSecretValue{
-			"princess-pup": {
-				{
-					HelmKey:    "postgresql.auth.password",
-					SecretName: "pg-password",
-				},
-			},
-		},
+		Secrets:   getValidSecrets(),
 		SecretProviders: map[string]SecretProvider{
 			"princess-pup": {
 				Type:   SecretProviderType("gcp"),
 				Config: map[string]string{"project": "princess-pup"},
+			},
+			"github": {
+				Type:   SecretProviderType("github-actions"),
+				Config: nil,
 			},
 		},
 		hasDependencies: false,
@@ -71,5 +68,22 @@ func TestArgs(configPath string) ActionArgs {
 		CurrentSha: "currentSha",
 		ProjectId:  "projectId",
 		Force:      false,
+	}
+}
+
+func getValidSecrets() map[string][]HelmSecretValue {
+	return map[string][]HelmSecretValue{
+		"princess-pup": {
+			{
+				HelmKey:    "postgresql.auth.password",
+				SecretName: "pg-password",
+			},
+		},
+		"github": {
+			{
+				HelmKey:    "postgresql.auth.username",
+				SecretName: "pg-username",
+			},
+		},
 	}
 }

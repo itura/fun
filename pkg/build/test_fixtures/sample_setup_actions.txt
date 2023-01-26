@@ -5,7 +5,7 @@
     - uses: azure/setup-helm@v3
       with:
         version: v3.10.2
-    - id: secrets
+    - id: secrets-princess-pup
       uses: google-github-actions/get-secretmanager-secrets@v1
       with:
         secrets: |-

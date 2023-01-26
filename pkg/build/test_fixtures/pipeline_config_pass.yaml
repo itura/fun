@@ -12,6 +12,8 @@ resources:
       type: gcp
       config:
         project: princess-pup
+    github:
+      type: github-actions
 
 artifacts:
   - id: api
@@ -30,3 +32,6 @@ applications:
       - helmKey: postgresql.auth.password
         secretName: pg-password
         provider: princess-pup
+      - helmKey: postgresql.auth.username
+        secretName: pg-username
+        provider: github

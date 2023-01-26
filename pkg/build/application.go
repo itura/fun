@@ -105,7 +105,7 @@ func GenerateGcpSecretsSteps(providers map[string]SecretProvider, secrets map[st
 				}
 
 				step := GitHubActionsStep{
-					Id:   "secrets",
+					Id:   "secrets-" + providerId,
 					Uses: "google-github-actions/get-secretmanager-secrets@v1",
 					With: map[string]string{
 						"secrets": secretsString,
@@ -144,4 +144,26 @@ func MarshalAndIndentSteps(steps []GitHubActionsStep) (string, error) {
 	stepString := strings.Join(lines, "\n")
 	stepString = strings.ReplaceAll(stepString, "secrets: |4-\n", "secrets: |-\n")
 	return stepString, nil
+}
+
+func (a Application) ResolveSecrets() map[string]string {
+	secretMappings := map[string]string{}
+
+	for providerId, secrets := range a.Secrets {
+		provider := a.SecretProviders[providerId]
+		for _, secret := range secrets {
+			envVarName := strings.ReplaceAll(secret.HelmKey, ".", "_")
+			switch provider.Type {
+			case typeGcp:
+				secretValue := fmt.Sprintf("${{ steps.secrets-%s.outputs.%s }}", providerId, secret.SecretName)
+
+				secretMappings[envVarName] = secretValue
+			case typeGithub:
+				secretValue := fmt.Sprintf("${{ secrets.%s }}", secret.SecretName)
+
+				secretMappings[envVarName] = secretValue
+			}
+		}
+	}
+	return secretMappings
 }
