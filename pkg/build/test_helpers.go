@@ -2,17 +2,7 @@ package build
 
 func getValidArtifacts() map[string]Artifact {
 	return map[string]Artifact{
-		"api": {
-			Id:              "api",
-			Path:            "packages/api",
-			Project:         "projectId",
-			Repository:      "us-central1-docker.pkg.dev/projectId/repo-name",
-			Host:            "us-central1-docker.pkg.dev",
-			CurrentSha:      "currentSha",
-			Type:            ArtifactType("app"),
-			hasDependencies: false,
-			hasChanged:      true,
-		},
+		"api": getAppArtifact(),
 	}
 }
 
@@ -85,5 +75,19 @@ func getValidSecrets() map[string][]HelmSecretValue {
 				SecretName: "pg-username",
 			},
 		},
+	}
+}
+
+func getAppArtifact() Artifact {
+	return Artifact{
+		Id:              "api",
+		Path:            "packages/api",
+		Project:         "projectId",
+		Repository:      "us-central1-docker.pkg.dev/projectId/repo-name",
+		Host:            "us-central1-docker.pkg.dev",
+		CurrentSha:      "currentSha",
+		Type:            ArtifactType("app"),
+		hasDependencies: false,
+		hasChanged:      true,
 	}
 }

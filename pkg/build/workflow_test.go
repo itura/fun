@@ -10,7 +10,19 @@ import (
 
 func TestWorkflowGeneration(t *testing.T) {
 	expectedYamlBytes, _ := os.ReadFile("test_fixtures/valid_workflow.yaml")
-	expectedWorkflow := GitHubActionsWorkflow{}
+	expectedWorkflow := GitHubActionsWorkflow{
+		Name: "My Build",
+		On: map[string]GitHubActionsTriggerEvent{
+			"push": {
+				Branches: []string{
+					"main",
+				},
+			},
+		},
+		Jobs: map[string]GitHubActionsJob{
+			"build-api": getAppArtifact().ToGitHubActionsJob(),
+		},
+	}
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)
 	assert.Nil(t, err)
 

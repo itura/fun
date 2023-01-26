@@ -9,20 +9,18 @@ type GitHubActionsWorkflow struct {
 type GitHubActionsJob struct {
 	Name        string
 	RunsOn      string `yaml:"runs-on"`
-	Permissions GitHubActionsJobPermissions
-	Needs       []string
+	Permissions map[string]string
+	Needs       []string `yaml:"needs,omitempty"`
 	Steps       []GitHubActionsStep
 }
 
-type GitHubActionsJobPermissions struct {
-	IdToken  string `yaml:"id-token"`
-	Contents string
-}
-
 type GitHubActionsStep struct {
-	Id   string `yaml:"id,omitempty"`
-	Uses string
-	With map[string]string
+	Id   string            `yaml:"id,omitempty"`
+	Name string            `yaml:"name,omitempty"`
+	Uses string            `yaml:"uses,omitempty"`
+	With map[string]string `yaml:"with,omitempty"`
+	Env  map[string]string `yaml:"env,omitempty"`
+	Run  string            `yaml:"run,omitempty"`
 }
 
 type GitHubActionsTriggerEvent struct {
