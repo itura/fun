@@ -34,12 +34,6 @@ type Application struct {
 	hasChanged        bool
 }
 
-type GitHubActionsStep struct {
-	Id   string `yaml:"id,omitempty"`
-	Uses string
-	With map[string]string
-}
-
 func (a Application) PrepareBuild() (Build, error) {
 	switch a.Type {
 	case typeHelm:
