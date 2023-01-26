@@ -115,7 +115,6 @@ jobs:
     - uses: actions/setup-go@v3
       with:
         go-version: '1.19'
-
     - uses: google-github-actions/get-gke-credentials@v1
       with:
         cluster_name: cluster-name
@@ -155,7 +154,6 @@ jobs:
     - uses: actions/setup-go@v3
       with:
         go-version: '1.19'
-
     - uses: google-github-actions/get-gke-credentials@v1
       with:
         cluster_name: cluster-name
@@ -163,6 +161,14 @@ jobs:
     - uses: azure/setup-helm@v3
       with:
         version: v3.10.2
+    - id: secrets
+      uses: google-github-actions/get-secretmanager-secrets@v1
+      with:
+        secrets: |-
+            client-id:princess-pup/client-id
+            client-secret:princess-pup/client-secret
+            next-auth-url:princess-pup/next-auth-url
+            next-auth-secret:princess-pup/next-auth-secret
 
     - name: Deploy app
       env:
