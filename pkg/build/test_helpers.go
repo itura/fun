@@ -60,3 +60,16 @@ func getHelmApplication() Application {
 		hasChanged:      true,
 	}
 }
+
+func TestArgs(configPath string) ActionArgs {
+	return ActionArgs{
+		CommonArgs: CommonArgs{
+			ConfigPath: configPath,
+			Self:       false,
+		},
+		Id:         "test",
+		CurrentSha: "currentSha",
+		ProjectId:  "projectId",
+		Force:      false,
+	}
+}

@@ -25,19 +25,22 @@ type Pipeline struct {
 	Cmd             string
 }
 
-func NewPipeline(configPath string, projectId string, currentSha string, previousSha string, force bool, self bool) (Pipeline, error) {
-	artifactsMap, applicationsMap, name, err := parseConfig(configPath, projectId, currentSha, previousSha, force)
-	if err != nil {
-		return Pipeline{}, err
+func NewPipeline(result ParsedConfig, configPath string, _cmd string) Pipeline {
+	return Pipeline{
+		ConfigPath:      configPath,
+		artifactsMap:    result.Artifacts,
+		Artifacts:       result.ListArtifacts(),
+		applicationsMap: result.Applications,
+		Applications:    result.ListApplications(),
+		Name:            result.BuildName,
+		Cmd:             _cmd,
 	}
+}
 
-	var artifacts []Artifact
-	for _, v := range artifactsMap {
-		artifacts = append(artifacts, v)
-	}
-	var applications []Application
-	for _, v := range applicationsMap {
-		applications = append(applications, v)
+func ParsePipeline(args ActionArgs, previousSha string) (Pipeline, error) {
+	config := parseConfig(args, previousSha)
+	if config.Error != nil {
+		return Pipeline{}, config.Error
 	}
 
 	_version, err := versionFile.ReadFile("VERSION")
@@ -45,21 +48,13 @@ func NewPipeline(configPath string, projectId string, currentSha string, previou
 		return Pipeline{}, err
 	}
 	var _cmd string
-	if self {
+	if args.Self {
 		_cmd = "cmd/build/main.go"
 	} else {
 		_cmd = fmt.Sprintf("github.com/itura/fun/cmd/build@%s", _version)
 	}
 
-	return Pipeline{
-		ConfigPath:      configPath,
-		artifactsMap:    artifactsMap,
-		Artifacts:       artifacts,
-		applicationsMap: applicationsMap,
-		Applications:    applications,
-		Name:            name,
-		Cmd:             _cmd,
-	}, nil
+	return NewPipeline(config, args.ConfigPath, _cmd), nil
 }
 
 func (p Pipeline) BuildArtifact(id string) error {

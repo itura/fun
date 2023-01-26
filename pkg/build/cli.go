@@ -18,7 +18,7 @@ type ActionArgs struct {
 }
 
 func (a ActionArgs) CreatePipeline() (Pipeline, error) {
-	return NewPipeline(a.ConfigPath, a.ProjectId, a.CurrentSha, previousCommit(), a.Force, a.Self)
+	return ParsePipeline(a, previousCommit())
 }
 
 type GenerateArgs struct {
@@ -27,7 +27,13 @@ type GenerateArgs struct {
 }
 
 func (g GenerateArgs) CreatePipeline() (Pipeline, error) {
-	return NewPipeline(g.ConfigPath, "", "", "", false, g.Self)
+	return ParsePipeline(ActionArgs{
+		CommonArgs: g.CommonArgs,
+		Id:         "",
+		CurrentSha: "",
+		ProjectId:  "",
+		Force:      false,
+	}, "")
 }
 
 type GenerateCommand struct {

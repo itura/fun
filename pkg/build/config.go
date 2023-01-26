@@ -81,32 +81,41 @@ type PipelineConfig struct {
 	}
 }
 
-func parseConfig(configPath string, projectId string, currentSha string, previousSha string, force bool) (map[string]Artifact, map[string]Application, string, error) {
+func _parsePipelineConfig(configPath string) (PipelineConfig, error) {
 	dat, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, nil, "", err
+		return PipelineConfig{}, err
 	}
 
 	var config PipelineConfig
 	err = yaml.Unmarshal(dat, &config)
 	if err != nil {
-		return nil, nil, "", err
+		return PipelineConfig{}, err
 	}
 
-	var repository string = fmt.Sprintf("%s/%s/%s", config.Resources.ArtifactRepository.Host, projectId, config.Resources.ArtifactRepository.Name)
+	return config, nil
+}
+
+func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
+	config, err := _parsePipelineConfig(args.ConfigPath)
+	if err != nil {
+		return FailedParse("", err)
+	}
+
+	var repository string = fmt.Sprintf("%s/%s/%s", config.Resources.ArtifactRepository.Host, args.ProjectId, config.Resources.ArtifactRepository.Name)
 	var providerConfigs map[string]SecretProvider = config.Resources.SecretProviders
 
 	// TODO extract
 	for _, provider := range providerConfigs {
 		if provider.Type != typeGcp && provider.Type != typeGithub {
-			return nil, nil, "", InvalidSecretProviderType{GivenType: string(provider.Type)}
+			return FailedParse(config.Name, InvalidSecretProviderType{GivenType: string(provider.Type)})
 		}
 	}
 
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
 		var cd ChangeDetection
-		if force {
+		if args.Force {
 			cd = NewAlwaysChanged()
 		} else {
 			_cd := NewGitChangeDetection(previousSha).
@@ -123,10 +132,10 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			Type:            spec.Type,
 			Id:              spec.Id,
 			Path:            spec.Path,
-			Project:         projectId,
+			Project:         args.ProjectId,
 			Repository:      repository,
 			Host:            config.Resources.ArtifactRepository.Host,
-			CurrentSha:      currentSha,
+			CurrentSha:      args.CurrentSha,
 			hasDependencies: len(spec.Dependencies) > 0,
 			hasChanged:      cd.HasChanged(),
 		}
@@ -136,7 +145,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 	for _, spec := range config.Applications {
 		var upstreams []Job
 		var cd ChangeDetection
-		if force {
+		if args.Force {
 			cd = NewAlwaysChanged()
 		} else {
 			_cd := NewGitChangeDetection(previousSha).
@@ -161,7 +170,7 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			_, ok := providerConfigs[secretConfig.Provider]
 
 			if !ok {
-				return nil, nil, "", MissingSecretProvider{}
+				return FailedParse(config.Name, MissingSecretProvider{})
 			}
 
 			helmSecretValue := HelmSecretValue{
@@ -178,9 +187,9 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 			Type:              spec.Type,
 			Id:                spec.Id,
 			Path:              spec.Path,
-			ProjectId:         projectId,
+			ProjectId:         args.ProjectId,
 			Repository:        repository,
-			CurrentSha:        currentSha,
+			CurrentSha:        args.CurrentSha,
 			Namespace:         spec.Namespace,
 			Values:            spec.Values,
 			Upstreams:         upstreams,
@@ -192,5 +201,5 @@ func parseConfig(configPath string, projectId string, currentSha string, previou
 		}
 	}
 
-	return artifacts, applications, config.Name, nil
+	return SuccessfulParse(config.Name, artifacts, applications)
 }
