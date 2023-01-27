@@ -11,7 +11,7 @@ var steps = []GitHubActionsStep{
 	{
 		Id:   "",
 		Uses: "google-github-actions/get-gke-credentials@v1",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"cluster_name": "cluster-name",
 			"location":     "uscentral1",
 		},
@@ -19,14 +19,14 @@ var steps = []GitHubActionsStep{
 	{
 		Id:   "",
 		Uses: "azure/setup-helm@v3",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"version": "v3.10.2",
 		},
 	},
 	{
 		Id:   "secrets-princess-pup",
 		Uses: "google-github-actions/get-secretmanager-secrets@v1",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"secrets": `
 pg-password:princess-pup/pg-password`,
 		},

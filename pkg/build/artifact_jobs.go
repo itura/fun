@@ -21,15 +21,15 @@ func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 	checkoutStep := GitHubActionsStep{
 		Name: "Checkout Repo",
 		Uses: "actions/checkout@v3",
-		With: map[string]string{
-			"fetch-depth": "2",
+		With: map[string]interface{}{
+			"fetch-depth": 2,
 		},
 	}
 
 	setupGoStep := GitHubActionsStep{
 		Name: "Setup Go",
 		Uses: "actions/setup-go@v3",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"go-version": "1.19",
 		},
 	}
@@ -37,7 +37,7 @@ func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 	googleAuthStep := GitHubActionsStep{
 		Name: "Authenticate to GCloud via Service Account",
 		Uses: "google-github-actions/auth@v1",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"workload_identity_provider": "TODO",
 			"service_account":            "TODO",
 		},

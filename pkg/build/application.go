@@ -121,7 +121,7 @@ func GenerateGcpSecretsSteps(providers map[string]SecretProvider, secrets map[st
 				step := GitHubActionsStep{
 					Id:   "secrets-" + providerId,
 					Uses: "google-github-actions/get-secretmanager-secrets@v1",
-					With: map[string]string{
+					With: map[string]interface{}{
 						"secrets": secretsString,
 					},
 				}

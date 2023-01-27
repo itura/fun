@@ -28,5 +28,9 @@ func TestWorkflowGeneration(t *testing.T) {
 
 	workflow := pipeline.ToGitHubWorkflow()
 
+	// workflowBytes, _ := yaml.Marshal(workflow)
+
+	// os.WriteFile("test_fixtures/test.yaml", workflowBytes, 0644)
+
 	assert.Equal(t, expectedWorkflow, workflow)
 }

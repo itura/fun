@@ -21,15 +21,15 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 	checkoutStep := GitHubActionsStep{
 		Name: "Checkout Repo",
 		Uses: "actions/checkout@v3",
-		With: map[string]string{
-			"fetch-depth": "2",
+		With: map[string]interface{}{
+			"fetch-depth": 2,
 		},
 	}
 
 	setupGoStep := GitHubActionsStep{
 		Name: "Setup Go",
 		Uses: "actions/setup-go@v3",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"go-version": "1.19",
 		},
 	}
@@ -37,7 +37,7 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 	googleAuthStep := GitHubActionsStep{
 		Name: "Authenticate to GCloud via Service Account",
 		Uses: "google-github-actions/auth@v1",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"workload_identity_provider": "TODO",
 			"service_account":            "TODO",
 		},
@@ -69,7 +69,7 @@ func GetHelmSteps(cluster ClusterConfig) []GitHubActionsStep {
 	gkeAuthStep := GitHubActionsStep{
 		Name: "Authenticate to GKE Cluster",
 		Uses: "google-github-actions/get-gke-credentials@v1",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"cluster_name": cluster.Name,
 			"location":     cluster.Location,
 		},
@@ -78,7 +78,7 @@ func GetHelmSteps(cluster ClusterConfig) []GitHubActionsStep {
 	setupHelmStep := GitHubActionsStep{
 		Name: "Setup Helm",
 		Uses: "azure/setup-helm@v3",
-		With: map[string]string{
+		With: map[string]interface{}{
 			"version": "v3.10.2",
 		},
 	}
@@ -94,7 +94,7 @@ func GetTerraformSteps() []GitHubActionsStep {
 		{
 			Name: "Setup Terraform",
 			Uses: "hashicorp/setup-terraform@v2",
-			With: map[string]string{
+			With: map[string]interface{}{
 				"terraform_version": "1.3.6",
 			},
 		},
@@ -121,7 +121,7 @@ func GetGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string]
 					Name: fmt.Sprintf("Get Secrets from GCP Provider %s", providerId),
 					Id:   "secrets-" + providerId,
 					Uses: "google-github-actions/get-secretmanager-secrets@v1",
-					With: map[string]string{
+					With: map[string]interface{}{
 						"secrets": strings.Join(secrets, "\n"),
 					},
 				}

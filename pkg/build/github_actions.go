@@ -1,8 +1,9 @@
 package build
 
 import (
-	"gopkg.in/yaml.v3"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type GitHubActionsWorkflow struct {
@@ -32,12 +33,12 @@ type GitHubActionsJob struct {
 }
 
 type GitHubActionsStep struct {
-	Id   string            `yaml:"id,omitempty"`
-	Name string            `yaml:"name,omitempty"`
-	Uses string            `yaml:"uses,omitempty"`
-	With map[string]string `yaml:"with,omitempty"`
-	Env  map[string]string `yaml:"env,omitempty"`
-	Run  string            `yaml:"run,omitempty"`
+	Id   string                 `yaml:"id,omitempty"`
+	Name string                 `yaml:"name,omitempty"`
+	Uses string                 `yaml:"uses,omitempty"`
+	With map[string]interface{} `yaml:"with,omitempty"`
+	Env  map[string]string      `yaml:"env,omitempty"`
+	Run  string                 `yaml:"run,omitempty"`
 }
 
 type GitHubActionsTriggerEvent struct {
