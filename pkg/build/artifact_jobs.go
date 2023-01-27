@@ -65,16 +65,13 @@ func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 			fmt.Sprintf("go run %s build-artifact %s", cmd, a.Id),
 			fmt.Sprintf("--config %s", configPath),
 			"--current-sha $GITHUB_SHA",
-			"--project-id $PROJECT_ID",
+			"--project-id " + a.Project,
 		}, " \\\n  ",
 	)
 
 	buildArtifactStep := GitHubActionsStep{
 		Name: fmt.Sprintf("Build %s", a.Id),
-		Env: map[string]string{
-			"PROJECT_ID": a.Project,
-		},
-		Run: buildArtifactCommand,
+		Run:  buildArtifactCommand,
 	}
 
 	return []GitHubActionsStep{

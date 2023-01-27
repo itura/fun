@@ -6,6 +6,12 @@ import (
 )
 
 func (a Application) ToGitHubActionsJob(cmd string, configPath string) GitHubActionsJob {
+	var needs []string
+
+	for _, job := range a.Upstreams {
+		needs = append(needs, job.JobId())
+	}
+
 	return GitHubActionsJob{
 		Name:   "Deploy " + a.Id,
 		RunsOn: "ubuntu-latest",
@@ -13,6 +19,7 @@ func (a Application) ToGitHubActionsJob(cmd string, configPath string) GitHubAct
 			"id-token": "write",
 			"contents": "read",
 		},
+		Needs: needs,
 		Steps: a.GetSteps(cmd, configPath),
 	}
 }
@@ -58,7 +65,7 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 		steps = append(steps, GetTerraformSteps()...)
 	}
 
-	deployStep := GetDeployStep(a.Id, a.ProjectId, a.Values, a.ResolveSecrets(), GetDeployRunCommand(a.Id, cmd, configPath))
+	deployStep := GetDeployStep(a.Id, a.ProjectId, a.Values, a.ResolveSecrets(), GetDeployRunCommand(a.Id, cmd, configPath, a.ProjectId))
 
 	steps = append(steps, deployStep)
 
@@ -135,7 +142,7 @@ func GetGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string]
 
 func GetDeployStep(applicationId string, projectId string, values []HelmValue, resolvedSecrets map[string]string, runCommand string) GitHubActionsStep {
 
-	envMap := map[string]string{"PROJECT_ID": projectId}
+	envMap := map[string]string{}
 
 	for _, helmValue := range values {
 		envVarName := resolveKey(helmValue)
@@ -153,11 +160,11 @@ func GetDeployStep(applicationId string, projectId string, values []HelmValue, r
 	}
 }
 
-func GetDeployRunCommand(applicationId string, cmd string, configPath string) string {
+func GetDeployRunCommand(applicationId string, cmd string, configPath string, projectId string) string {
 	return strings.Join([]string{
 		fmt.Sprintf("go run %s deploy-application %s", cmd, applicationId),
 		"--config " + configPath,
 		"--current-sha $GITHUB_SHA",
-		"--project-id $PROJECT_ID",
+		"--project-id " + projectId,
 	}, " \\\n  ")
 }

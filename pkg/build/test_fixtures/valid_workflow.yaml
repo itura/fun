@@ -33,14 +33,11 @@ jobs:
       - name: Configure Docker
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
       - name: Build api
-        env:
-          PROJECT_ID: projectId
         run: |-
           go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact api \
             --config test_fixtures/pipeline_config_pass.yaml \
             --current-sha $GITHUB_SHA \
-            --project-id $PROJECT_ID
-
+            --project-id projectId
   build-client:
     name: Build client
     runs-on: ubuntu-latest
@@ -68,13 +65,11 @@ jobs:
       - name: Configure Docker
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
       - name: Build client
-        env:
-          PROJECT_ID: projectId
         run: |-
           go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact client \
             --config test_fixtures/pipeline_config_pass.yaml \
             --current-sha $GITHUB_SHA \
-            --project-id $PROJECT_ID
+            --project-id projectId
 
   deploy-db:
     name: Deploy db
@@ -82,6 +77,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    needs:
+      - build-client
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -114,7 +111,6 @@ jobs:
 
       - name: Deploy db
         env:
-          PROJECT_ID: projectId
           postgresql_dbName: my-db
           postgresql_auth_password: ${{ steps.secrets-princess-pup.outputs.pg-password }}
           postgresql_auth_username: ${{ secrets.pg-username }}
@@ -122,4 +118,4 @@ jobs:
           go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \
             --config test_fixtures/pipeline_config_pass.yaml \
             --current-sha $GITHUB_SHA \
-            --project-id $PROJECT_ID
+            --project-id projectId

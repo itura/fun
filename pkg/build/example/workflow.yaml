@@ -37,6 +37,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    needs:
+      - build-api
     steps:
       - uses: actions/checkout@v3
         with:

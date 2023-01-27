@@ -1,9 +1,10 @@
 package build
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // might be hard to get this to pass, but we should be able

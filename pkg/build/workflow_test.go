@@ -27,7 +27,7 @@ func TestWorkflowGeneration(t *testing.T) {
 	clientArtifact := builder.Artifact("client", "packages/client", apiArtifact)
 
 	dbApp := PostgresHelmChart(builder)
-	// dbApp.Upstreams = []Job{clientArtifact}
+	dbApp.Upstreams = []Job{clientArtifact}
 	parsedConfig := SuccessfulParse(
 		"My Build",
 		map[string]Artifact{
