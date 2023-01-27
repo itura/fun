@@ -1,0 +1,145 @@
+name: TMTY CI/CD
+"on":
+  push:
+    branches:
+      - trunk
+jobs:
+  build-api:
+    name: Build api
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: "2"
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Authenticate to GCloud via Service Account
+        uses: google-github-actions/auth@v1
+        with:
+          service_account: TODO
+          workload_identity_provider: TODO
+      - name: Configure GCloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+  build-client:
+    name: Build client
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: "2"
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Authenticate to GCloud via Service Account
+        uses: google-github-actions/auth@v1
+        with:
+          service_account: TODO
+          workload_identity_provider: TODO
+      - name: Configure GCloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+  deploy-app:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: "2"
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Authenticate to GCloud via Service Account
+        uses: google-github-actions/auth@v1
+        with:
+          service_account: TODO
+          workload_identity_provider: TODO
+      - name: Authenticate to GKE Cluster
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: cluster-name
+          location: uscentral1
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.2
+      - id: secrets-princess-pup
+        name: Get Secrets from GCP Provider princess-pup
+        uses: google-github-actions/get-secretmanager-secrets@v1
+        with:
+          secrets: |-
+            client-id:princess-pup/client-id
+            client-secret:princess-pup/client-secret
+            next-auth-url:princess-pup/next-auth-url
+            next-auth-secret:princess-pup/next-auth-secret
+  deploy-db:
+    name: Deploy db
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: "2"
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Authenticate to GCloud via Service Account
+        uses: google-github-actions/auth@v1
+        with:
+          service_account: TODO
+          workload_identity_provider: TODO
+      - name: Authenticate to GKE Cluster
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: cluster-name
+          location: uscentral1
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.2
+  deploy-infra:
+    name: Deploy infra
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: "2"
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Authenticate to GCloud via Service Account
+        uses: google-github-actions/auth@v1
+        with:
+          service_account: TODO
+          workload_identity_provider: TODO
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.6

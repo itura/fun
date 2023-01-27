@@ -46,6 +46,8 @@ func (c GenerateCommand) Run() error {
 		return err
 	}
 
+	// TODO
+	//return pipeline.ToGitHubWorkflow().WriteYaml(c.OutputPath)
 	return pipeline.ToGithubActions(c.OutputPath)
 }
 
