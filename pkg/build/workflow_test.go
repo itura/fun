@@ -24,7 +24,7 @@ func TestWorkflowGeneration(t *testing.T) {
 			"db": PostgresHelmChart(builder),
 		},
 	)
-	pipeline := NewPipeline(parsedConfig, "test_fixtures/pipeline_config_pass.yaml", "generate")
+	pipeline := NewPipeline(parsedConfig, "test_fixtures/pipeline_config_pass.yaml", "github.com/itura/fun/cmd/build@v0.1.19")
 
 	workflow := pipeline.ToGitHubWorkflow()
 

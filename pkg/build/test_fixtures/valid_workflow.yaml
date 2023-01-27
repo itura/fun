@@ -32,14 +32,14 @@ jobs:
         uses: google-github-actions/setup-gcloud@v0
       - name: Configure Docker
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
-      # - name: Build api
-      #   env:
-      #     PROJECT_ID: ${{ secrets.PROJECT_ID }}
-      #   run: |-
-      #     go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact api \
-      #       --config pkg/build/test_fixtures/pipeline_config_pass.yaml \
-      #       --current-sha $GITHUB_SHA \
-      #       --project-id $PROJECT_ID
+      - name: Build api
+        env:
+          PROJECT_ID: projectId
+        run: |-
+          go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact api \
+            --config test_fixtures/pipeline_config_pass.yaml \
+            --current-sha $GITHUB_SHA \
+            --project-id $PROJECT_ID
 
   deploy-db:
     name: Deploy db

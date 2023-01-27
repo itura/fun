@@ -2,9 +2,10 @@ package build
 
 import (
 	"fmt"
+	"strings"
 )
 
-func (a Artifact) ToGitHubActionsJob() GitHubActionsJob {
+func (a Artifact) ToGitHubActionsJob(cmd string, configPath string) GitHubActionsJob {
 	return GitHubActionsJob{
 		Name:   "Build " + a.Id,
 		RunsOn: "ubuntu-latest",
@@ -12,11 +13,11 @@ func (a Artifact) ToGitHubActionsJob() GitHubActionsJob {
 			"id-token": "write",
 			"contents": "read",
 		},
-		Steps: a.GetSteps(),
+		Steps: a.GetSteps(cmd, configPath),
 	}
 }
 
-func (a Artifact) GetSteps() []GitHubActionsStep {
+func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 	checkoutStep := GitHubActionsStep{
 		Name: "Checkout Repo",
 		Uses: "actions/checkout@v3",
@@ -52,22 +53,22 @@ func (a Artifact) GetSteps() []GitHubActionsStep {
 		Run:  fmt.Sprintf("gcloud --quiet auth configure-docker %s", a.Host),
 	}
 
-	// buildArtifactCommand := strings.Join(
-	// 	[]string{
-	// 		fmt.Sprintf("\ngo run %s build-artifact %s", "TODO-> Cmd", a.Id),
-	// 		fmt.Sprintf("--config %s", "TODO-> ConfigPath"),
-	// 		"--current-sha $GITHUB_SHA",
-	// 		"--project-id $PROJECT_ID",
-	// 	}, " \t\\\n",
-	// )
+	buildArtifactCommand := strings.Join(
+		[]string{
+			fmt.Sprintf("go run %s build-artifact %s", cmd, a.Id),
+			fmt.Sprintf("--config %s", configPath),
+			"--current-sha $GITHUB_SHA",
+			"--project-id $PROJECT_ID",
+		}, " \\\n  ",
+	)
 
-	// buildArtifactStep := GitHubActionsStep{
-	// 	Name: fmt.Sprintf("Build %s", a.Id),
-	// 	Env: map[string]string{
-	// 		"PROJECT_ID": a.Project,
-	// 	},
-	// 	Run: buildArtifactCommand,
-	// }
+	buildArtifactStep := GitHubActionsStep{
+		Name: fmt.Sprintf("Build %s", a.Id),
+		Env: map[string]string{
+			"PROJECT_ID": a.Project,
+		},
+		Run: buildArtifactCommand,
+	}
 
 	return []GitHubActionsStep{
 		checkoutStep,
@@ -75,6 +76,6 @@ func (a Artifact) GetSteps() []GitHubActionsStep {
 		googleAuthStep,
 		setupGcloudStep,
 		configureDockerStep,
-		// buildArtifactStep,
+		buildArtifactStep,
 	}
 }

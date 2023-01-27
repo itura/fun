@@ -21,7 +21,7 @@ func (p Pipeline) ArtifactsAndAppsToGitHubActionsJobs() map[string]GitHubActions
 	jobs := map[string]GitHubActionsJob{}
 
 	for id, artifact := range p.artifactsMap {
-		jobs["build-"+id] = artifact.ToGitHubActionsJob()
+		jobs["build-"+id] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
 	}
 	for id, app := range p.applicationsMap {
 		jobs["deploy-"+id] = app.ToGitHubActionsJob()
