@@ -17,7 +17,7 @@ func (j TestJob) JobId() string {
 }
 
 func TestWorkflowGeneration(t *testing.T) {
-	builder := NewTestBuilder("projectId", "currentSha")
+	builder := NewTestBuilder("", "currentSha")
 	expectedYamlBytes, _ := os.ReadFile("test_fixtures/valid_workflow.yaml")
 	expectedWorkflow := GitHubActionsWorkflow{}
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)

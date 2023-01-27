@@ -41,14 +41,7 @@ func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 		},
 	}
 
-	googleAuthStep := GitHubActionsStep{
-		Name: "Authenticate to GCloud via Service Account",
-		Uses: "google-github-actions/auth@v1",
-		With: map[string]interface{}{
-			"workload_identity_provider": "TODO",
-			"service_account":            "TODO",
-		},
-	}
+	cloudProviderAuthStep := a.CloudProvider.GetGitHubActionsAuthStep()
 
 	setupGcloudStep := GitHubActionsStep{
 		Name: "Configure GCloud SDK",
@@ -65,7 +58,6 @@ func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 			fmt.Sprintf("go run %s build-artifact %s", cmd, a.Id),
 			fmt.Sprintf("--config %s", configPath),
 			"--current-sha $GITHUB_SHA",
-			"--project-id " + a.Project,
 		}, " \\\n  ",
 	)
 
@@ -77,9 +69,31 @@ func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 	return []GitHubActionsStep{
 		checkoutStep,
 		setupGoStep,
-		googleAuthStep,
+		cloudProviderAuthStep,
 		setupGcloudStep,
 		configureDockerStep,
 		buildArtifactStep,
+	}
+}
+
+// TODO: this belongs somewhere else
+func (c CloudProvider) GetGitHubActionsAuthStep() GitHubActionsStep {
+	if c.Type == "gcp" {
+		serviceAccount := c.Config["serviceAccount"]
+
+		workloadIdentityProvider := c.Config["workloadIdentityProvider"]
+
+		googleAuthStep := GitHubActionsStep{
+			Name: "Authenticate to GCloud via Service Account",
+			Uses: "google-github-actions/auth@v1",
+			With: map[string]interface{}{
+				"workload_identity_provider": formatSecretValue(workloadIdentityProvider),
+				"service_account":            formatSecretValue(serviceAccount),
+			},
+		}
+
+		return googleAuthStep
+	} else {
+		return GitHubActionsStep{}
 	}
 }

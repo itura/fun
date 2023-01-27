@@ -26,8 +26,8 @@ jobs:
       - name: Authenticate to GCloud via Service Account
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: TODO
-          service_account: TODO
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.BUILD_AGENT_SA }}
       - name: Configure GCloud SDK
         uses: google-github-actions/setup-gcloud@v0
       - name: Configure Docker
@@ -36,8 +36,8 @@ jobs:
         run: |-
           go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact api \
             --config test_fixtures/pipeline_config_pass.yaml \
-            --current-sha $GITHUB_SHA \
-            --project-id projectId
+            --current-sha $GITHUB_SHA
+
   build-client:
     name: Build client
     runs-on: ubuntu-latest
@@ -58,8 +58,8 @@ jobs:
       - name: Authenticate to GCloud via Service Account
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: TODO
-          service_account: TODO
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.BUILD_AGENT_SA }}
       - name: Configure GCloud SDK
         uses: google-github-actions/setup-gcloud@v0
       - name: Configure Docker
@@ -68,8 +68,7 @@ jobs:
         run: |-
           go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact client \
             --config test_fixtures/pipeline_config_pass.yaml \
-            --current-sha $GITHUB_SHA \
-            --project-id projectId
+            --current-sha $GITHUB_SHA
 
   deploy-db:
     name: Deploy db
@@ -91,8 +90,8 @@ jobs:
       - name: Authenticate to GCloud via Service Account
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: TODO
-          service_account: TODO
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.BUILD_AGENT_SA }}
       - name: Authenticate to GKE Cluster
         uses: google-github-actions/get-gke-credentials@v1
         with:
@@ -117,5 +116,4 @@ jobs:
         run: |-
           go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \
             --config test_fixtures/pipeline_config_pass.yaml \
-            --current-sha $GITHUB_SHA \
-            --project-id projectId
+            --current-sha $GITHUB_SHA

@@ -48,6 +48,11 @@ type ArtifactRepository struct {
 	Name string
 }
 
+type CloudProvider struct {
+	Type   string
+	Config map[string]string
+}
+
 type SecretProvider struct {
 	Type   SecretProviderType
 	Config map[string]string
@@ -67,6 +72,7 @@ type PipelineConfig struct {
 		ArtifactRepository ArtifactRepository `yaml:"artifactRepository"`
 		KubernetesCluster  ClusterConfig      `yaml:"kubernetesCluster"`
 		SecretProviders    SecretProviders    `yaml:"secretProviders"`
+		CloudProvider      CloudProvider      `yaml:"cloudProvider"`
 	}
 	Artifacts []struct {
 		Id           string
@@ -107,7 +113,22 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 		return FailedParse("", err)
 	}
 
-	var repository string = fmt.Sprintf("%s/%s/%s", config.Resources.ArtifactRepository.Host, args.ProjectId, config.Resources.ArtifactRepository.Name)
+	cloudProvider := config.Resources.CloudProvider
+
+	if cloudProvider.Type == "gcp" {
+		_, ok := cloudProvider.Config["serviceAccount"]
+		if !ok {
+			return FailedParse(config.Name, fmt.Errorf("No service account configured for cloud provider of type %s", cloudProvider.Type))
+		}
+
+		_, ok = cloudProvider.Config["workloadIdentityProvider"]
+		if !ok {
+			return FailedParse(config.Name, fmt.Errorf("No Workload Identity Provider configured for cloud provider of type %s", cloudProvider.Type))
+		}
+	} else {
+		return FailedParse(config.Name, InvalidCloudProvider{"Missing/Unknown"})
+	}
+
 	var providerConfigs map[string]SecretProvider = config.Resources.SecretProviders
 
 	// TODO extract
@@ -116,6 +137,8 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 			return FailedParse(config.Name, InvalidSecretProviderType{GivenType: string(provider.Type)})
 		}
 	}
+
+	var repository string = fmt.Sprintf("%s/%s/%s", config.Resources.ArtifactRepository.Host, cloudProvider.Config["project"], config.Resources.ArtifactRepository.Name)
 
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
@@ -146,6 +169,7 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 			hasDependencies: len(spec.Dependencies) > 0,
 			Upstreams:       upstreams,
 			hasChanged:      cd.HasChanged(),
+			CloudProvider:   config.Resources.CloudProvider,
 		}
 	}
 
@@ -206,6 +230,7 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 			Secrets:           helmSecretValues,
 			SecretProviders:   providerConfigs,
 			hasChanged:        cd.HasChanged(),
+			CloudProvider:     config.Resources.CloudProvider,
 		}
 	}
 

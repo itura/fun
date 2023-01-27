@@ -15,3 +15,9 @@ type InvalidSecretProviderType struct {
 func (m InvalidSecretProviderType) Error() string {
 	return fmt.Sprintf("Invalid provider type `%s` given", m.GivenType)
 }
+
+type InvalidCloudProvider struct{ Message string }
+
+func (m InvalidCloudProvider) Error() string {
+	return m.Message
+}

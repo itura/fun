@@ -14,12 +14,6 @@ resources:
         project: princess-pup
     github:
       type: github-actions
-  cloudProvider:
-    type: gcp
-    config:
-      project: projectId
-      workloadIdentityProvider: WORKLOAD_IDENTITY_PROVIDER
-      serviceAccount: BUILD_AGENT_SA
 
 artifacts:
   - id: api

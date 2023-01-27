@@ -41,19 +41,12 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 		},
 	}
 
-	googleAuthStep := GitHubActionsStep{
-		Name: "Authenticate to GCloud via Service Account",
-		Uses: "google-github-actions/auth@v1",
-		With: map[string]interface{}{
-			"workload_identity_provider": "TODO",
-			"service_account":            "TODO",
-		},
-	}
+	cloudProviderAuthStep := a.CloudProvider.GetGitHubActionsAuthStep()
 
 	steps := []GitHubActionsStep{
 		checkoutStep,
 		setupGoStep,
-		googleAuthStep,
+		cloudProviderAuthStep,
 	}
 
 	if a.Type == typeHelm {
@@ -65,7 +58,7 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 		steps = append(steps, GetTerraformSteps()...)
 	}
 
-	deployStep := GetDeployStep(a.Id, a.ProjectId, a.Values, a.ResolveSecrets(), GetDeployRunCommand(a.Id, cmd, configPath, a.ProjectId))
+	deployStep := GetDeployStep(a.Id, a.Values, a.ResolveSecrets(), GetDeployRunCommand(a.Id, cmd, configPath))
 
 	steps = append(steps, deployStep)
 
@@ -140,7 +133,7 @@ func GetGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string]
 	return gcpSecretsSteps
 }
 
-func GetDeployStep(applicationId string, projectId string, values []HelmValue, resolvedSecrets map[string]string, runCommand string) GitHubActionsStep {
+func GetDeployStep(applicationId string, values []HelmValue, resolvedSecrets map[string]string, runCommand string) GitHubActionsStep {
 
 	envMap := map[string]string{}
 
@@ -160,11 +153,10 @@ func GetDeployStep(applicationId string, projectId string, values []HelmValue, r
 	}
 }
 
-func GetDeployRunCommand(applicationId string, cmd string, configPath string, projectId string) string {
+func GetDeployRunCommand(applicationId string, cmd string, configPath string) string {
 	return strings.Join([]string{
 		fmt.Sprintf("go run %s deploy-application %s", cmd, applicationId),
 		"--config " + configPath,
 		"--current-sha $GITHUB_SHA",
-		"--project-id " + projectId,
 	}, " \\\n  ")
 }

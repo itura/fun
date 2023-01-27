@@ -1,8 +1,9 @@
 package build
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseConfig(t *testing.T) {
@@ -35,6 +36,11 @@ func TestParseConfig(t *testing.T) {
 			name:     "InvalidSecretProviderType",
 			args:     TestArgs("test_fixtures/invalid_secret_provider.yaml"),
 			expected: FailedParse("My Build", InvalidSecretProviderType{GivenType: "aws"}),
+		},
+		{
+			name:     "InvalidCloudProvider",
+			args:     TestArgs("test_fixtures/invalid_cloud_provider.yaml"),
+			expected: FailedParse("My Build", InvalidCloudProvider{Message: "Missing/Unknown"}),
 		},
 	}
 

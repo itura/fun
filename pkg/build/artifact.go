@@ -15,6 +15,7 @@ type Artifact struct {
 	Upstreams       []Job
 	hasDependencies bool
 	hasChanged      bool
+	CloudProvider   CloudProvider
 }
 
 func (a Artifact) PrepareBuild() (Build, error) {

@@ -32,6 +32,7 @@ type Application struct {
 	SecretProviders   map[string]SecretProvider
 	hasDependencies   bool
 	hasChanged        bool
+	CloudProvider     CloudProvider
 }
 
 func (a Application) PrepareBuild() (Build, error) {

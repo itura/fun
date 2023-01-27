@@ -56,11 +56,23 @@ func (b TestBuilder) Artifact(id string, path string, upstreams ...Job) Artifact
 		hasDependencies: len(upstreams) > 0,
 		hasChanged:      true,
 		Upstreams:       upstreams,
+		CloudProvider:   b.cloudProvider(),
 	}
 }
 
 func (b TestBuilder) repository() string {
 	return fmt.Sprintf("%s/%s/%s", b.artifactRepo.Host, b.project, b.artifactRepo.Name)
+}
+
+func (b TestBuilder) cloudProvider() CloudProvider {
+	return CloudProvider{
+		Type: "gcp",
+		Config: map[string]string{
+			"project":                  b.project,
+			"workloadIdentityProvider": "WORKLOAD_IDENTITY_PROVIDER",
+			"serviceAccount":           "BUILD_AGENT_SA",
+		},
+	}
 }
 
 func (b TestBuilder) Application(id string, path string, upstreams ...Job) Application {
@@ -79,6 +91,7 @@ func (b TestBuilder) Application(id string, path string, upstreams ...Job) Appli
 		SecretProviders:   b.secretProviders,
 		hasDependencies:   len(upstreams) > 0,
 		hasChanged:        true,
+		CloudProvider:     b.cloudProvider(),
 	}
 }
 
