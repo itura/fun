@@ -77,14 +77,14 @@ jobs:
           secrets: |-
             pg-password:princess-pup/pg-password
 
-  #     - name: Deploy db
-  #       env:
-  #         PROJECT_ID: ${{ secrets.PROJECT_ID }}
-  #         postgresql_dbName: my-db
-  #         postgresql_auth_password: ${{ steps.secrets-princess-pup.outputs.pg-password }}
-  #         postgresql_auth_username: ${{ secrets.pg-username }}
-  #       run: |-
-  #         go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \
-  #           --config pkg/build/test_fixtures/pipeline_config_pass.yaml \
-  #           --current-sha $GITHUB_SHA \
-  #           --project-id $PROJECT_ID
+      - name: Deploy db
+        env:
+          PROJECT_ID: projectId
+          postgresql_dbName: my-db
+          postgresql_auth_password: ${{ steps.secrets-princess-pup.outputs.pg-password }}
+          postgresql_auth_username: ${{ secrets.pg-username }}
+        run: |-
+          go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \
+            --config test_fixtures/pipeline_config_pass.yaml \
+            --current-sha $GITHUB_SHA \
+            --project-id $PROJECT_ID

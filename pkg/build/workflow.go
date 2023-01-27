@@ -11,8 +11,6 @@ func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
 		Jobs: p.ArtifactsAndAppsToGitHubActionsJobs(),
 	}
 
-	// TODO
-
 	return workflow
 
 }
@@ -24,7 +22,7 @@ func (p Pipeline) ArtifactsAndAppsToGitHubActionsJobs() map[string]GitHubActions
 		jobs["build-"+id] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
 	}
 	for id, app := range p.applicationsMap {
-		jobs["deploy-"+id] = app.ToGitHubActionsJob()
+		jobs["deploy-"+id] = app.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
 	}
 
 	return jobs

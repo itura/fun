@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (a Application) ToGitHubActionsJob() GitHubActionsJob {
+func (a Application) ToGitHubActionsJob(cmd string, configPath string) GitHubActionsJob {
 	return GitHubActionsJob{
 		Name:   "Deploy " + a.Id,
 		RunsOn: "ubuntu-latest",
@@ -13,11 +13,11 @@ func (a Application) ToGitHubActionsJob() GitHubActionsJob {
 			"id-token": "write",
 			"contents": "read",
 		},
-		Steps: a.GetSteps(),
+		Steps: a.GetSteps(cmd, configPath),
 	}
 }
 
-func (a Application) GetSteps() []GitHubActionsStep {
+func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 	checkoutStep := GitHubActionsStep{
 		Name: "Checkout Repo",
 		Uses: "actions/checkout@v3",
@@ -57,6 +57,10 @@ func (a Application) GetSteps() []GitHubActionsStep {
 	} else if a.Type == typeTerraform {
 		steps = append(steps, GetTerraformSteps()...)
 	}
+
+	deployStep := GetDeployStep(a.Id, a.ProjectId, a.Values, a.ResolveSecrets(), GetDeployRunCommand(a.Id, cmd, configPath))
+
+	steps = append(steps, deployStep)
 
 	return steps
 }
@@ -127,4 +131,33 @@ func GetGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string]
 	}
 
 	return gcpSecretsSteps
+}
+
+func GetDeployStep(applicationId string, projectId string, values []HelmValue, resolvedSecrets map[string]string, runCommand string) GitHubActionsStep {
+
+	envMap := map[string]string{"PROJECT_ID": projectId}
+
+	for _, helmValue := range values {
+		envVarName := resolveKey(helmValue)
+		envMap[envVarName] = helmValue.Value
+	}
+
+	for envVarName, secret := range resolvedSecrets {
+		envMap[envVarName] = secret
+	}
+
+	return GitHubActionsStep{
+		Name: "Deploy " + applicationId,
+		Env:  envMap,
+		Run:  runCommand,
+	}
+}
+
+func GetDeployRunCommand(applicationId string, cmd string, configPath string) string {
+	return strings.Join([]string{
+		fmt.Sprintf("go run %s deploy-application %s", cmd, applicationId),
+		"--config " + configPath,
+		"--current-sha $GITHUB_SHA",
+		"--project-id $PROJECT_ID",
+	}, " \\\n  ")
 }
