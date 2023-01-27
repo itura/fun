@@ -6,6 +6,12 @@ import (
 )
 
 func (a Artifact) ToGitHubActionsJob(cmd string, configPath string) GitHubActionsJob {
+	var upstreamIds []string = nil
+
+	for _, job := range a.Upstreams {
+		upstreamIds = append(upstreamIds, job.JobId())
+	}
+
 	return GitHubActionsJob{
 		Name:   "Build " + a.Id,
 		RunsOn: "ubuntu-latest",
@@ -13,6 +19,7 @@ func (a Artifact) ToGitHubActionsJob(cmd string, configPath string) GitHubAction
 			"id-token": "write",
 			"contents": "read",
 		},
+		Needs: upstreamIds,
 		Steps: a.GetSteps(cmd, configPath),
 	}
 }

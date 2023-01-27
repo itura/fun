@@ -41,6 +41,41 @@ jobs:
             --current-sha $GITHUB_SHA \
             --project-id $PROJECT_ID
 
+  build-client:
+    name: Build client
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    needs:
+      - build-api
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.19"
+      - name: Authenticate to GCloud via Service Account
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: TODO
+          service_account: TODO
+      - name: Configure GCloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
+      - name: Build client
+        env:
+          PROJECT_ID: projectId
+        run: |-
+          go run github.com/itura/fun/cmd/build@v0.1.19 build-artifact client \
+            --config test_fixtures/pipeline_config_pass.yaml \
+            --current-sha $GITHUB_SHA \
+            --project-id $PROJECT_ID
+
   deploy-db:
     name: Deploy db
     runs-on: ubuntu-latest

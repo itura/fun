@@ -22,6 +22,8 @@ artifacts:
   - id: client
     path: packages/client
     type: app
+    dependencies:
+      - api
 
 applications:
   - id: infra

@@ -44,7 +44,7 @@ func NewTestBuilder(project, currentSha string) TestBuilder {
 	}
 }
 
-func (b TestBuilder) Artifact(id string, path string) Artifact {
+func (b TestBuilder) Artifact(id string, path string, upstreams ...Job) Artifact {
 	return Artifact{
 		Id:              id,
 		Path:            path,
@@ -53,8 +53,9 @@ func (b TestBuilder) Artifact(id string, path string) Artifact {
 		Host:            b.artifactRepo.Host,
 		CurrentSha:      b.currentSha,
 		Type:            "app",
-		hasDependencies: false,
+		hasDependencies: len(upstreams) > 0,
 		hasChanged:      true,
+		Upstreams:       upstreams,
 	}
 }
 
@@ -76,7 +77,7 @@ func (b TestBuilder) Application(id string, path string, upstreams ...Job) Appli
 		Type:              "helm",
 		Secrets:           map[string][]HelmSecretValue{},
 		SecretProviders:   b.secretProviders,
-		hasDependencies:   false,
+		hasDependencies:   len(upstreams) > 0,
 		hasChanged:        true,
 	}
 }

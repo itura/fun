@@ -8,6 +8,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type TestJob struct {
+	Id string
+}
+
+func (j TestJob) JobId() string {
+	return j.Id
+}
+
 func TestWorkflowGeneration(t *testing.T) {
 	builder := NewTestBuilder("projectId", "currentSha")
 	expectedYamlBytes, _ := os.ReadFile("test_fixtures/valid_workflow.yaml")
@@ -15,13 +23,19 @@ func TestWorkflowGeneration(t *testing.T) {
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)
 	assert.Nil(t, err)
 
+	apiArtifact := builder.Artifact("api", "packages/api")
+	clientArtifact := builder.Artifact("client", "packages/client", apiArtifact)
+
+	dbApp := PostgresHelmChart(builder)
+	// dbApp.Upstreams = []Job{clientArtifact}
 	parsedConfig := SuccessfulParse(
 		"My Build",
 		map[string]Artifact{
-			"api": builder.Artifact("api", "packages/api"),
+			"api":    apiArtifact,
+			"client": clientArtifact,
 		},
 		map[string]Application{
-			"db": PostgresHelmChart(builder),
+			"db": dbApp,
 		},
 	)
 	pipeline := NewPipeline(parsedConfig, "test_fixtures/pipeline_config_pass.yaml", "github.com/itura/fun/cmd/build@v0.1.19")

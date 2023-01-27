@@ -5,14 +5,14 @@ import (
 )
 
 type Artifact struct {
-	Id         string
-	Path       string
-	Project    string
-	Repository string
-	Host       string
-	CurrentSha string
-	Type       ArtifactType
-
+	Id              string
+	Path            string
+	Project         string
+	Repository      string
+	Host            string
+	CurrentSha      string
+	Type            ArtifactType
+	Upstreams       []Job
 	hasDependencies bool
 	hasChanged      bool
 }

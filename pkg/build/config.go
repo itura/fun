@@ -2,8 +2,9 @@ package build
 
 import (
 	"fmt"
-	"github.com/itura/fun/pkg/fun"
 	"os"
+
+	"github.com/itura/fun/pkg/fun"
 
 	"gopkg.in/yaml.v3"
 )
@@ -118,6 +119,7 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
+		var upstreams []Job
 		var cd ChangeDetection
 		if args.Force {
 			cd = NewAlwaysChanged()
@@ -128,6 +130,7 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 			// todo make agnostic to ordering
 			for _, id := range spec.Dependencies {
 				_cd = _cd.AddPaths(artifacts[id].Path)
+				upstreams = append(upstreams, artifacts[id])
 			}
 			cd = _cd
 		}
@@ -141,6 +144,7 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 			Host:            config.Resources.ArtifactRepository.Host,
 			CurrentSha:      args.CurrentSha,
 			hasDependencies: len(spec.Dependencies) > 0,
+			Upstreams:       upstreams,
 			hasChanged:      cd.HasChanged(),
 		}
 	}
