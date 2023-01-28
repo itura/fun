@@ -2,11 +2,8 @@ name: My Build
 
 resources:
   artifactRepository:
-    host: us-central1-docker.pkg.dev
     name: repo-name
-  kubernetesCluster:
-    name: cluster-name
-    location: uscentral1
+
   secretProviders:
     princess-pup:
       type: gcp

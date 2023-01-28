@@ -1,16 +1,10 @@
 package build
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
-	"os"
 	"strings"
-	"text/template"
 )
-
-//go:embed ci-cd.yaml.tmpl
-var ghActionsTemplate embed.FS
 
 //go:embed VERSION
 var versionFile embed.FS
@@ -38,9 +32,9 @@ func NewPipeline(result ParsedConfig, configPath string, _cmd string) Pipeline {
 }
 
 func ParsePipeline(args ActionArgs, previousSha string) (Pipeline, error) {
-	config := parseConfig(args, previousSha)
-	if config.Error != nil {
-		return Pipeline{}, config.Error
+	parsedConfig := parseConfig(args, previousSha)
+	if parsedConfig.Error != nil {
+		return Pipeline{}, parsedConfig.Error
 	}
 
 	_version, err := versionFile.ReadFile("VERSION")
@@ -54,7 +48,7 @@ func ParsePipeline(args ActionArgs, previousSha string) (Pipeline, error) {
 		_cmd = fmt.Sprintf("github.com/itura/fun/cmd/build@%s", _version)
 	}
 
-	return NewPipeline(config, args.ConfigPath, _cmd), nil
+	return NewPipeline(parsedConfig, args.ConfigPath, _cmd), nil
 }
 
 func (p Pipeline) BuildArtifact(id string) error {
@@ -81,30 +75,27 @@ func (p Pipeline) DeployApplication(id string) error {
 	return build.Build()
 }
 
-func (p Pipeline) ToGithubActions(outputPath string) error {
-	tplData, err := ghActionsTemplate.ReadFile("ci-cd.yaml.tmpl")
-	if err != nil {
-		return err
+func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
+	jobs := map[string]GitHubActionsJob{}
+
+	for id, artifact := range p.artifactsMap {
+		jobs["build-"+id] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
+	}
+	for id, app := range p.applicationsMap {
+		jobs["deploy-"+id] = app.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
 	}
 
-	tpl, err := template.New("workflow").
-		Funcs(template.FuncMap{
-			"secret":     formatSecretValue,
-			"env":        formatEnvValue,
-			"resolveKey": resolveKey,
-		}).
-		Parse(string(tplData))
-	if err != nil {
-		return err
+	workflow := GitHubActionsWorkflow{
+		Name: p.Name,
+		On: map[string]GitHubActionsTriggerEvent{
+			"push": {
+				Branches: []string{"trunk"},
+			},
+		},
+		Jobs: jobs,
 	}
 
-	var buffer bytes.Buffer
-	err = tpl.Execute(&buffer, p)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(outputPath, buffer.Bytes(), 0644)
+	return workflow
 }
 
 func resolveKey(value HelmValue) string {

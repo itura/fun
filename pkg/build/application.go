@@ -3,8 +3,6 @@ package build
 import (
 	"fmt"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 type HelmValue struct {
@@ -32,7 +30,71 @@ type Application struct {
 	SecretProviders   map[string]SecretProvider
 	hasDependencies   bool
 	hasChanged        bool
-	CloudProvider     CloudProvider
+	CloudProvider     CloudProviderConfig
+}
+
+func CreateApplications(args ActionArgs, previousSha string, config PipelineConfig, artifacts map[string]Artifact, repository string) (map[string]Application, error) {
+	applications := make(map[string]Application)
+	for _, spec := range config.Applications {
+		var upstreams []Job
+		var cd ChangeDetection
+		if args.Force {
+			cd = NewAlwaysChanged()
+		} else {
+			_cd := NewGitChangeDetection(previousSha).
+				AddPaths(spec.Path)
+
+			// todo make agnostic to ordering
+			for _, id := range spec.Artifacts {
+				_cd = _cd.AddPaths(artifacts[id].Path)
+				upstreams = append(upstreams, artifacts[id])
+			}
+			for _, id := range spec.Dependencies {
+				_cd = _cd.AddPaths(applications[id].Path)
+				upstreams = append(upstreams, applications[id])
+			}
+			cd = _cd
+		}
+
+		var secretConfigs = spec.Secrets
+
+		helmSecretValues := make(map[string][]HelmSecretValue, len(secretConfigs))
+		for _, secretConfig := range secretConfigs {
+			_, ok := config.Resources.SecretProviders[secretConfig.Provider]
+
+			if !ok {
+				return nil, MissingSecretProvider{}
+			}
+
+			helmSecretValue := HelmSecretValue{
+				HelmKey:    secretConfig.HelmKey,
+				SecretName: secretConfig.SecretName,
+			}
+
+			providerSecretsList := helmSecretValues[secretConfig.Provider]
+			helmSecretValues[secretConfig.Provider] = append(providerSecretsList, helmSecretValue)
+		}
+
+		hasDependencies := len(spec.Dependencies) > 0 || len(spec.Artifacts) > 0
+		applications[spec.Id] = Application{
+			Type:              spec.Type,
+			Id:                spec.Id,
+			Path:              spec.Path,
+			ProjectId:         args.ProjectId,
+			Repository:        repository,
+			CurrentSha:        args.CurrentSha,
+			Namespace:         spec.Namespace,
+			Values:            spec.Values,
+			Upstreams:         upstreams,
+			hasDependencies:   hasDependencies,
+			KubernetesCluster: config.Resources.KubernetesCluster,
+			Secrets:           helmSecretValues,
+			SecretProviders:   config.Resources.SecretProviders,
+			hasChanged:        cd.HasChanged(),
+			CloudProvider:     config.Resources.CloudProvider,
+		}
+	}
+	return applications, nil
 }
 
 func (a Application) PrepareBuild() (Build, error) {
@@ -52,34 +114,6 @@ func (a Application) JobId() string {
 
 func (a Application) HasDependencies() bool {
 	return a.hasDependencies
-}
-
-func (a Application) Setup() string {
-
-	if a.Type == typeHelm {
-
-		setupSteps := fmt.Sprintf(`    - uses: google-github-actions/get-gke-credentials@v1
-      with:
-        cluster_name: %s
-        location: %s
-    - uses: azure/setup-helm@v3
-      with:
-        version: v3.10.2
-`, a.KubernetesCluster.Name, a.KubernetesCluster.Location)
-
-		gcpSecretsSteps, _ := GenerateGcpSecretsSteps(a.SecretProviders, a.Secrets)
-		setupSteps += gcpSecretsSteps
-
-		return setupSteps
-	} else if a.Type == typeTerraform {
-		return `
-    - uses: 'hashicorp/setup-terraform@v2'
-      with:
-        terraform_version: '1.3.6'
-`
-	} else {
-		return ""
-	}
 }
 
 func (a Application) AddValue(key, value string) Application {
@@ -102,65 +136,6 @@ func (a Application) SetSecret(key, provider, name string) Application {
 	return a
 }
 
-func GenerateGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string][]HelmSecretValue) (string, error) {
-	if len(secrets) == 0 {
-		return "", nil
-	}
-
-	gcpSecretsSteps := []GitHubActionsStep{}
-
-	for providerId, providerSecrets := range secrets {
-		if len(providerSecrets) > 0 {
-			provider := providers[providerId]
-			if provider.Type == typeGcp {
-				secretsString := ""
-
-				for _, secret := range providerSecrets {
-					secretsString += fmt.Sprintf("\n%s:%s/%s", secret.SecretName, provider.Config["project"], secret.SecretName)
-				}
-
-				step := GitHubActionsStep{
-					Id:   "secrets-" + providerId,
-					Uses: "google-github-actions/get-secretmanager-secrets@v1",
-					With: map[string]interface{}{
-						"secrets": secretsString,
-					},
-				}
-				gcpSecretsSteps = append(gcpSecretsSteps, step)
-			}
-		}
-	}
-
-	if len(gcpSecretsSteps) > 0 {
-		gcpSecretStepsStr, err := MarshalAndIndentSteps(gcpSecretsSteps)
-		if err != nil {
-			return "", err
-		}
-		return gcpSecretStepsStr, nil
-	} else {
-		return "", nil
-	}
-}
-
-func MarshalAndIndentSteps(steps []GitHubActionsStep) (string, error) {
-	stepsBytes, err := yaml.Marshal(steps)
-	if err != nil {
-		return "", err
-	}
-
-	lines := strings.Split(string(stepsBytes), "\n")
-	for i, line := range lines {
-		if i == len(lines)-1 {
-			break
-		}
-		lines[i] = "    " + line
-	}
-
-	stepString := strings.Join(lines, "\n")
-	stepString = strings.ReplaceAll(stepString, "secrets: |4-\n", "secrets: |-\n")
-	return stepString, nil
-}
-
 func (a Application) ResolveSecrets() map[string]string {
 	secretMappings := map[string]string{}
 
@@ -169,11 +144,11 @@ func (a Application) ResolveSecrets() map[string]string {
 		for _, secret := range secrets {
 			envVarName := strings.ReplaceAll(secret.HelmKey, ".", "_")
 			switch provider.Type {
-			case typeGcp:
+			case secretProviderTypeGcp:
 				secretValue := fmt.Sprintf("${{ steps.secrets-%s.outputs.%s }}", providerId, secret.SecretName)
 
 				secretMappings[envVarName] = secretValue
-			case typeGithub:
+			case secretProviderTypeGithub:
 				secretValue := fmt.Sprintf("${{ secrets.%s }}", secret.SecretName)
 
 				secretMappings[envVarName] = secretValue

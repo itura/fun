@@ -41,7 +41,7 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 		},
 	}
 
-	cloudProviderAuthStep := a.CloudProvider.GetGitHubActionsAuthStep()
+	cloudProviderAuthStep := a.CloudProvider.Impl().AuthStep()
 
 	steps := []GitHubActionsStep{
 		checkoutStep,
@@ -107,7 +107,7 @@ func GetGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string]
 	for providerId, providerSecrets := range secrets {
 		if len(providerSecrets) > 0 {
 			provider := providers[providerId]
-			if provider.Type == typeGcp {
+			if provider.Type == secretProviderTypeGcp {
 				secrets := []string{}
 
 				for _, secret := range providerSecrets {

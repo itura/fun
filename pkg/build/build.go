@@ -177,7 +177,6 @@ func (b HelmDeployment) deployApplication() error {
 		"upgrade", b.Id, b.Path,
 		"--install",
 		"--atomic",
-		"--wait",
 		"--namespace", b.Namespace,
 		"--set", fmt.Sprintf("repo=%s", b.Repository),
 		"--set", fmt.Sprintf("tag=%s", b.CurrentSha),

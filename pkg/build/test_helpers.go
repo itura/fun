@@ -29,11 +29,11 @@ func NewTestBuilder(project, currentSha string) TestBuilder {
 		},
 		secretProviders: SecretProviders{
 			"princess-pup": {
-				Type:   typeGcp,
+				Type:   secretProviderTypeGcp,
 				Config: map[string]string{"project": "princess-pup"},
 			},
 			"github": {
-				Type:   typeGithub,
+				Type:   secretProviderTypeGithub,
 				Config: nil,
 			},
 		},
@@ -64,9 +64,9 @@ func (b TestBuilder) repository() string {
 	return fmt.Sprintf("%s/%s/%s", b.artifactRepo.Host, b.project, b.artifactRepo.Name)
 }
 
-func (b TestBuilder) cloudProvider() CloudProvider {
-	return CloudProvider{
-		Type: "gcp",
+func (b TestBuilder) cloudProvider() CloudProviderConfig {
+	return CloudProviderConfig{
+		Type: cloudProviderTypeGcp,
 		Config: map[string]string{
 			"project":                  b.project,
 			"workloadIdentityProvider": "WORKLOAD_IDENTITY_PROVIDER",

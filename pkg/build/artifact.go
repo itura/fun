@@ -15,7 +15,43 @@ type Artifact struct {
 	Upstreams       []Job
 	hasDependencies bool
 	hasChanged      bool
-	CloudProvider   CloudProvider
+	CloudProvider   CloudProviderConfig
+}
+
+func CreateArtifacts(args ActionArgs, previousSha string, config PipelineConfig, repository string) map[string]Artifact {
+	artifacts := make(map[string]Artifact)
+	for _, spec := range config.Artifacts {
+		var upstreams []Job
+		var cd ChangeDetection
+		if args.Force {
+			cd = NewAlwaysChanged()
+		} else {
+			_cd := NewGitChangeDetection(previousSha).
+				AddPaths(spec.Path)
+
+			// todo make agnostic to ordering
+			for _, id := range spec.Dependencies {
+				_cd = _cd.AddPaths(artifacts[id].Path)
+				upstreams = append(upstreams, artifacts[id])
+			}
+			cd = _cd
+		}
+
+		artifacts[spec.Id] = Artifact{
+			Type:            spec.Type,
+			Id:              spec.Id,
+			Path:            spec.Path,
+			Project:         args.ProjectId,
+			Repository:      repository,
+			Host:            config.Resources.ArtifactRepository.Host,
+			CurrentSha:      args.CurrentSha,
+			hasDependencies: len(spec.Dependencies) > 0,
+			Upstreams:       upstreams,
+			hasChanged:      cd.HasChanged(),
+			CloudProvider:   config.Resources.CloudProvider,
+		}
+	}
+	return artifacts
 }
 
 func (a Artifact) PrepareBuild() (Build, error) {
@@ -24,10 +60,6 @@ func (a Artifact) PrepareBuild() (Build, error) {
 		return NewPackageVerifier(a), nil
 	case typeApp:
 		return NewDockerImage(a), nil
-	case typeLibGo:
-		return NewGoPackageVerifier(a), nil
-	case typeAppGo:
-		return NewGoDockerImage(a), nil
 	default:
 		return NullBuild{}, fmt.Errorf("invalid artifact type %s", a.Type)
 	}
