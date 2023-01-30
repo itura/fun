@@ -48,7 +48,6 @@ func (b TestBuilder) Artifact(id string, path string, upstreams ...Job) Artifact
 	return Artifact{
 		Id:              id,
 		Path:            path,
-		Project:         b.project,
 		Repository:      b.repository(),
 		Host:            b.artifactRepo.Host,
 		CurrentSha:      b.currentSha,
@@ -79,7 +78,6 @@ func (b TestBuilder) Application(id string, path string, upstreams ...Job) Appli
 	return Application{
 		Id:                id,
 		Path:              path,
-		ProjectId:         b.project,
 		Repository:        b.repository(),
 		KubernetesCluster: b.clusterConfig,
 		CurrentSha:        b.currentSha,
@@ -103,7 +101,6 @@ func TestArgs(configPath string) ActionArgs {
 		},
 		Id:         "test",
 		CurrentSha: "currentSha",
-		ProjectId:  "projectId",
 		Force:      false,
 	}
 }

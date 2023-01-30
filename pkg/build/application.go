@@ -18,7 +18,6 @@ type HelmSecretValue struct {
 type Application struct {
 	Id                string
 	Path              string
-	ProjectId         string
 	Repository        string
 	KubernetesCluster ClusterConfig
 	CurrentSha        string
@@ -80,7 +79,6 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 			Type:              spec.Type,
 			Id:                spec.Id,
 			Path:              spec.Path,
-			ProjectId:         args.ProjectId,
 			Repository:        repository,
 			CurrentSha:        args.CurrentSha,
 			Namespace:         spec.Namespace,

@@ -14,7 +14,6 @@ type ActionArgs struct {
 	Id         string `arg:"positional,required"`
 	CurrentSha string `arg:"--current-sha,required" help:"current git sha, used for change detection"`
 	Force      bool   `arg:"--force" help:"Ignore change detection"`
-	ProjectId  string
 }
 
 func (a ActionArgs) CreatePipeline() (Pipeline, error) {
@@ -31,7 +30,6 @@ func (g GenerateArgs) CreatePipeline() (Pipeline, error) {
 		CommonArgs: g.CommonArgs,
 		Id:         "",
 		CurrentSha: "",
-		ProjectId:  "",
 		Force:      false,
 	}, "")
 }

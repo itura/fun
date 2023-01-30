@@ -7,7 +7,6 @@ import (
 type Artifact struct {
 	Id              string
 	Path            string
-	Project         string
 	Repository      string
 	Host            string
 	CurrentSha      string
@@ -41,7 +40,6 @@ func CreateArtifacts(args ActionArgs, previousSha string, config PipelineConfig,
 			Type:            spec.Type,
 			Id:              spec.Id,
 			Path:            spec.Path,
-			Project:         args.ProjectId,
 			Repository:      repository,
 			Host:            config.Resources.ArtifactRepository.Host,
 			CurrentSha:      args.CurrentSha,

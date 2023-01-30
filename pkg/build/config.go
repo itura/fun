@@ -14,14 +14,6 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 		return FailedParse("", err)
 	}
 
-	// TODO: Project ID is a GCP concept, but threaded through the application as such
-	fmt.Printf("my config is %+v\n", args)
-	gcp, ok := config.Resources.CloudProvider.Impl().(GCP)
-	if !ok {
-		return FailedParse("", fmt.Errorf("Supported cloud providers are limited to: GCP"))
-	}
-	args.ProjectId = gcp.Project()
-
 	validationErrors := config.Validate("")
 	if validationErrors.IsPresent() {
 		return FailedParse(config.Name, validationErrors)
