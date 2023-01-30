@@ -13,8 +13,8 @@ type ActionArgs struct {
 	CommonArgs
 	Id         string `arg:"positional,required"`
 	CurrentSha string `arg:"--current-sha,required" help:"current git sha, used for change detection"`
-	ProjectId  string `arg:"--project-id,required" help:"GCP project id"`
 	Force      bool   `arg:"--force" help:"Ignore change detection"`
+	ProjectId  string
 }
 
 func (a ActionArgs) CreatePipeline() (Pipeline, error) {
