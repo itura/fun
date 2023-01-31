@@ -9,6 +9,9 @@ type Build interface {
 	Build() error
 }
 
+type Build1 interface {
+	Build1() (SideEffects, error)
+}
 type NullBuild struct{}
 
 func (b NullBuild) Build() error {
@@ -215,4 +218,34 @@ func (b TfConfig) Build() error {
 	}
 
 	return nil
+}
+
+func (b TfConfig) Build1() (SideEffects, error) {
+	return SideEffects{
+		Commands: []Command{
+			{
+				Name: "terraform",
+				Arguments: []string{
+					"-chdir=terraform/main",
+					"init",
+				},
+			},
+			{
+				Name: "terraform",
+				Arguments: []string{
+					"-chdir=terraform/main",
+					"plan",
+					"-out=plan.out",
+				},
+			},
+			{
+				Name: "terraform",
+				Arguments: []string{
+					"-chdir=terraform/main",
+					"apply",
+					"plan.out",
+				},
+			},
+		},
+	}, nil
 }

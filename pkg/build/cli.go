@@ -70,5 +70,15 @@ func (c DeployApplicationCommand) Run() error {
 		return err
 	}
 
-	return pipeline.DeployApplication(c.Id)
+	sideEffects, err := pipeline.DeployApplication(c.Id)
+	if err != nil {
+		return err
+	}
+
+	err = sideEffects.Apply()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

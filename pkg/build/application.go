@@ -95,6 +95,15 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 	return applications, nil
 }
 
+func (a Application) PrepareBuild1() Build1 {
+	switch a.Type {
+	case typeTerraform:
+		return NewTerraform(a)
+	default:
+		panic("This sucks")
+	}
+}
+
 func (a Application) PrepareBuild() (Build, error) {
 	switch a.Type {
 	case typeHelm:

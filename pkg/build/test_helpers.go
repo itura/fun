@@ -5,7 +5,7 @@ import (
 )
 
 func PostgresHelmChart(builder TestBuilder) Application {
-	return builder.Application("db", "helm/db").
+	return builder.Application("db", "helm/db", typeHelm).
 		AddValue("postgresql.dbName", "my-db").
 		SetSecret("postgresql.auth.password", "princess-pup", "pg-password").
 		SetSecret("postgresql.auth.username", "github", "pg-username")
@@ -74,7 +74,7 @@ func (b TestBuilder) cloudProvider() CloudProviderConfig {
 	}
 }
 
-func (b TestBuilder) Application(id string, path string, upstreams ...Job) Application {
+func (b TestBuilder) Application(id string, path string, appType ApplicationType, upstreams ...Job) Application {
 	return Application{
 		Id:                id,
 		Path:              path,
@@ -84,7 +84,7 @@ func (b TestBuilder) Application(id string, path string, upstreams ...Job) Appli
 		Namespace:         "app-namespace",
 		Values:            []HelmValue{},
 		Upstreams:         upstreams,
-		Type:              "helm",
+		Type:              appType,
 		Secrets:           map[string][]HelmSecretValue{},
 		SecretProviders:   b.secretProviders,
 		hasDependencies:   len(upstreams) > 0,

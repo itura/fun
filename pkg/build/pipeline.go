@@ -63,16 +63,14 @@ func (p Pipeline) BuildArtifact(id string) error {
 	return build.Build()
 }
 
-func (p Pipeline) DeployApplication(id string) error {
+func (p Pipeline) DeployApplication(id string) (SideEffects, error) {
 	application, present := p.applicationsMap[id]
 	if !present {
-		return fmt.Errorf("invalid id %s", id)
+		return SideEffects{}, fmt.Errorf("invalid id %s", id)
 	}
-	build, err := application.PrepareBuild()
-	if err != nil {
-		return nil
-	}
-	return build.Build()
+	build := application.PrepareBuild1()
+
+	return build.Build1()
 }
 
 func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
