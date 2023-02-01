@@ -99,8 +99,10 @@ func (a Application) PrepareBuild1() Build1 {
 	switch a.Type {
 	case typeTerraform:
 		return NewTerraform(a)
+	case typeHelm:
+		return NewHelm(a)
 	default:
-		panic("This sucks")
+		return NullBuild{}
 	}
 }
 

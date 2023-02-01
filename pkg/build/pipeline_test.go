@@ -80,7 +80,6 @@ func TestDeployTerraformApplication(t *testing.T) {
 }
 
 func TestDeployHelmApplication(t *testing.T) {
-	t.Skip("MAKE THIS NOT SUCK")
 	builder := NewTestBuilder("currentSha")
 
 	dbApp := PostgresHelmChart(builder)
@@ -96,7 +95,7 @@ func TestDeployHelmApplication(t *testing.T) {
 	sideEffects, err := pipeline.DeployApplication("db")
 
 	assert.Nil(t, err)
-	assert.Equal(t, sideEffects.Commands, []Command{
+	assert.Equal(t, []Command{
 		{
 			Name: "helm",
 			Arguments: []string{
@@ -113,7 +112,7 @@ func TestDeployHelmApplication(t *testing.T) {
 				"--install",
 				"--atomic",
 				"--namespace",
-				"app-namespace",
+				"db-namespace",
 				"--set",
 				fmt.Sprintf("repo=%s", builder.repository()),
 				"--set",
@@ -123,8 +122,8 @@ func TestDeployHelmApplication(t *testing.T) {
 				"--set",
 				"postgresql.auth.password=$postgresql_auth_password",
 				"--set",
-				"postgresql.auth.username=$postgresql_auth_password",
+				"postgresql.auth.username=$postgresql_auth_username",
 			}},
-	})
+	}, sideEffects.Commands)
 
 }

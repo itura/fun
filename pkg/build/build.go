@@ -3,6 +3,7 @@ package build
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Build interface {
@@ -13,6 +14,10 @@ type Build1 interface {
 	Build1() (SideEffects, error)
 }
 type NullBuild struct{}
+
+func (b NullBuild) Build1() (SideEffects, error) {
+	return SideEffects{}, fmt.Errorf("invalid build")
+}
 
 func (b NullBuild) Build() error {
 	return fmt.Errorf("invalid build")
@@ -159,6 +164,44 @@ func NewHelm(a Application) HelmDeployment {
 	return HelmDeployment{
 		Application: a,
 	}
+}
+
+func (b HelmDeployment) Build1() (SideEffects, error) {
+	args := []string{
+		"upgrade", b.Id, b.Path,
+		"--install",
+		"--atomic",
+		"--namespace", b.Namespace,
+		"--set", fmt.Sprintf("repo=%s", b.Repository),
+		"--set", fmt.Sprintf("tag=%s", b.CurrentSha),
+	}
+
+	for _, value := range b.Values {
+		envValue := strings.ReplaceAll(value.Key, ".", "_")
+		args = append(args, "--set", fmt.Sprintf("%s=$%s", value.Key, envValue))
+	}
+	for _, providerSecret := range b.Secrets {
+		for _, secret := range providerSecret {
+			envVarName := strings.ReplaceAll(secret.HelmKey, ".", "_")
+			args = append(args, "--set", fmt.Sprintf("%s=$%s", secret.HelmKey, envVarName))
+		}
+	}
+
+	return SideEffects{
+		Commands: []Command{
+			{
+				Name: "helm",
+				Arguments: []string{
+					"dep",
+					"update",
+				},
+			},
+			{
+				Name:      "helm",
+				Arguments: args,
+			},
+		},
+	}, nil
 }
 
 func (b HelmDeployment) Build() error {
