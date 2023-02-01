@@ -57,7 +57,17 @@ func (c BuildArtifactCommand) Run() error {
 		return err
 	}
 
-	return pipeline.BuildArtifact(c.Id)
+	sideEffects, err := pipeline.BuildArtifact(c.Id)
+	if err != nil {
+		return err
+	}
+
+	err = sideEffects.Apply()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type DeployApplicationCommand struct {

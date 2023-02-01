@@ -63,6 +63,18 @@ func (a Artifact) PrepareBuild() (Build, error) {
 	}
 }
 
+func (a Artifact) PrepareBuild1() (Build1, error) {
+	return NewDockerImage(a), nil
+	// switch a.Type {
+	// case typeLib:
+	// 	return NewPackageVerifier(a), nil
+	// case typeApp:
+	// 	return NewDockerImage(a), nil
+	// default:
+	// 	return NullBuild{}, fmt.Errorf("invalid artifact type %s", a.Type)
+	// }
+}
+
 func (a Artifact) GreenTag() string {
 	return "latest-green"
 }

@@ -38,17 +38,6 @@ func NewPackageVerifier(a Artifact) PackageVerifier {
 	}
 }
 
-func NewGoPackageVerifier(a Artifact) PackageVerifier {
-	return PackageVerifier{
-		Artifact:   a,
-		dockerfile: "Dockerfile-go",
-		workdir:    ".",
-		buildArgs: []string{
-			fmt.Sprintf("APP_DIR=%s", a.Path),
-		},
-	}
-}
-
 func (b PackageVerifier) Build() error {
 	if b.hasChanged {
 		if err := b.buildImage(b.VerifyImageName(), b.VerifyTarget()); err != nil {
@@ -59,6 +48,29 @@ func (b PackageVerifier) Build() error {
 		}
 	}
 	return nil
+}
+
+func (b PackageVerifier) Build1() (SideEffects, error) {
+	if b.hasChanged {
+		return SideEffects{Commands: []Command{
+			{
+				Name: "docker",
+				Arguments: []string{
+					"build",
+					"-f", b.dockerfile,
+					"-t", b.VerifyImageName(),
+					"--target", b.VerifyTarget(),
+				},
+			},
+			{
+				Name:      "docker",
+				Arguments: []string{"run", "--rm", b.VerifyImageName()},
+			},
+		}}, nil
+
+	}
+
+	return SideEffects{}, nil
 }
 
 func (b PackageVerifier) buildImage(imageTag string, target string) error {
@@ -97,12 +109,6 @@ func NewDockerImage(a Artifact) DockerImage {
 	}
 }
 
-func NewGoDockerImage(a Artifact) DockerImage {
-	return DockerImage{
-		PackageVerifier: NewGoPackageVerifier(a),
-	}
-}
-
 func (b DockerImage) Build() error {
 	if err := b.PackageVerifier.Build(); err != nil {
 		return err
@@ -120,6 +126,50 @@ func (b DockerImage) Build() error {
 		}
 	}
 	return nil
+}
+
+func (b DockerImage) Build1() (SideEffects, error) {
+	sideEffects, err := b.PackageVerifier.Build1()
+	if err != nil {
+		return SideEffects{}, err
+	}
+
+	commitTag := b.AppImageName(b.CurrentSha)
+	greenTag := b.AppImageName(b.GreenTag())
+
+	if b.hasChanged {
+		sideEffects.AddCommand(Command{
+			Name: "docker",
+			Arguments: []string{
+				"build",
+				"-f", b.dockerfile,
+				"-t", b.AppImageName(b.CurrentSha),
+				"--target", b.AppTarget(),
+			},
+		})
+		sideEffects.AddCommand(Command{
+			Name:      "docker",
+			Arguments: []string{"tag", commitTag, greenTag},
+		})
+		sideEffects.AddCommand(Command{
+			Name:      "docker",
+			Arguments: []string{"push", "--all-tags", b.AppImageBase()},
+		})
+	} else {
+		sideEffects.AddCommand(Command{
+			Name:      "docker",
+			Arguments: []string{"pull", greenTag},
+		})
+		sideEffects.AddCommand(Command{
+			Name:      "docker",
+			Arguments: []string{"tag", greenTag, commitTag},
+		})
+		sideEffects.AddCommand(Command{
+			Name:      "docker",
+			Arguments: []string{"push", commitTag},
+		})
+	}
+	return sideEffects, nil
 }
 
 func (b DockerImage) pushAppImage() error {

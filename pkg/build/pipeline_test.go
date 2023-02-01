@@ -127,3 +127,108 @@ func TestDeployHelmApplication(t *testing.T) {
 	}, sideEffects.Commands)
 
 }
+
+func TestBuildChangedApplicationArtifact(t *testing.T) {
+	builder := NewTestBuilder("currentSha")
+
+	clientArtifact := builder.Artifact("client", "pkgs/client")
+	parsedConfig := SuccessfulParse(
+		"My Build",
+		map[string]Artifact{
+			"client": clientArtifact,
+		},
+		map[string]Application{},
+	)
+	pipeline := NewPipeline(parsedConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.19")
+
+	sideEffects, err := pipeline.BuildArtifact("client")
+
+	assert.Nil(t, err)
+	assert.Equal(t, []Command{
+		{
+			Name: "docker",
+			Arguments: []string{
+				"build",
+				"-f", fmt.Sprintf("%s/Dockerfile", clientArtifact.Path),
+				"-t", "us-central1-docker.pkg.dev/gcp-project/repo-name/client-test:currentSha",
+				"--target", "test",
+			},
+		},
+		{
+			Name: "docker",
+			Arguments: []string{
+				"run",
+				"--rm",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-test:currentSha",
+			},
+		},
+		{
+			Name: "docker",
+			Arguments: []string{
+				"build",
+				"-f", fmt.Sprintf("%s/Dockerfile", clientArtifact.Path),
+				"-t", "us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:currentSha",
+				"--target", "app",
+			},
+		},
+		{
+			Name: "docker",
+			Arguments: []string{
+				"tag",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:currentSha",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:latest-green",
+			},
+		},
+		{
+			Name: "docker",
+			Arguments: []string{
+				"push",
+				"--all-tags",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-app",
+			},
+		},
+	}, sideEffects.Commands)
+}
+
+func TestBuildUnchangedApplicationArtifact(t *testing.T) {
+	builder := NewTestBuilder("currentSha")
+
+	clientArtifact := builder.Artifact("client", "pkgs/client")
+	clientArtifact.hasChanged = false
+	parsedConfig := SuccessfulParse(
+		"My Build",
+		map[string]Artifact{
+			"client": clientArtifact,
+		},
+		map[string]Application{},
+	)
+	pipeline := NewPipeline(parsedConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.19")
+
+	sideEffects, err := pipeline.BuildArtifact("client")
+
+	assert.Nil(t, err)
+	assert.Equal(t, []Command{
+		{
+			Name: "docker",
+			Arguments: []string{
+				"pull",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:latest-green",
+			},
+		},
+		{
+			Name: "docker",
+			Arguments: []string{
+				"tag",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:latest-green",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:currentSha",
+			},
+		},
+		{
+			Name: "docker",
+			Arguments: []string{
+				"push",
+				"us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:currentSha",
+			},
+		},
+	}, sideEffects.Commands)
+}

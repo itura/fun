@@ -22,6 +22,10 @@ func (s SideEffects) Apply() error {
 	return nil
 }
 
+func (s *SideEffects) AddCommand(command Command) {
+	s.Commands = append(s.Commands, command)
+}
+
 type CommandRunner interface {
 	Run(name string, args ...string) error
 	RunSilent(name string, args ...string) error

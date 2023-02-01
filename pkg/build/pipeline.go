@@ -45,16 +45,16 @@ func ParsePipeline(args ActionArgs, previousSha string) (Pipeline, error) {
 	return NewPipeline(config, args.ConfigPath, _cmd), nil
 }
 
-func (p Pipeline) BuildArtifact(id string) error {
+func (p Pipeline) BuildArtifact(id string) (SideEffects, error) {
 	artifact, present := p.config.Artifacts[id]
 	if !present {
-		return fmt.Errorf("invalid id %s", id)
+		return SideEffects{}, fmt.Errorf("invalid id %s", id)
 	}
-	build, err := artifact.PrepareBuild()
+	build, err := artifact.PrepareBuild1()
 	if err != nil {
-		return err
+		return SideEffects{}, err
 	}
-	return build.Build()
+	return build.Build1()
 }
 
 func (p Pipeline) DeployApplication(id string) (SideEffects, error) {
