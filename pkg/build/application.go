@@ -143,6 +143,11 @@ func (a Application) SetSecret(key, provider, name string) Application {
 	return a
 }
 
+func (a Application) SetNamespace(namespace string) Application {
+	a.Namespace = namespace
+	return a
+}
+
 func (a Application) ResolveSecrets() map[string]string {
 	secretMappings := map[string]string{}
 

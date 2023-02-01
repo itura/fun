@@ -10,24 +10,16 @@ import (
 
 func TestParseConfig(t *testing.T) {
 	builder := NewTestBuilder("currentSha")
+
 	cases := []struct {
 		args     ActionArgs
 		name     string
 		expected PipelineConfig
 	}{
 		{
-			name: "ValidPipelineConfig",
-			args: TestArgs("test_fixtures/pipeline_config_pass.yaml"),
-			expected: SuccessfulParse(
-				"My Build",
-				map[string]Artifact{
-					"api":    builder.Artifact("api", "packages/api"),
-					"client": builder.Artifact("client", "packages/client"),
-				},
-				map[string]Application{
-					"db": PostgresHelmChart(builder),
-				},
-			),
+			name:     "ValidPipelineConfig",
+			args:     TestArgs("test_fixtures/valid_pipeline_config.yaml"),
+			expected: ValidPipelineConfig(builder),
 		},
 		{
 			name:     "MissingSecretProvider",
@@ -143,7 +135,6 @@ func TestResourcesValidation(t *testing.T) {
 		CloudProvider: CloudProviderConfig{
 			Type: cloudProviderTypeGcp,
 			Config: fun.NewConfig[string]().
-				Set("project", "wild-west").
 				Set("serviceAccount", "yeehaw@yahoo.com").
 				Set("workloadIdentityProvider", "it me"),
 		},

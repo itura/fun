@@ -29,15 +29,15 @@ artifacts:
     type: app
 
 applications:
-  #  - id: infra
-  #    type: terraform
-  #    path: tf/main
+  - id: infra
+    type: terraform
+    path: tf/main
   - id: db
     type: helm
     path: helm/db
-    namespace: app-namespace
-    #    dependencies:
-    #      - infra
+    namespace: db-namespace
+    dependencies:
+      - infra
     values:
       - key: postgresql.dbName
         value: my-db
@@ -48,29 +48,29 @@ applications:
       - helmKey: postgresql.auth.username
         secretName: pg-username
         provider: github
-#  - id: app
-#    type: helm
-#    path: helm/app
-#    namespace: app-namespace
-#    artifacts:
-#      - client
-#      - api
-#    dependencies:
-#      - infra
-#      - db
-#    values:
-#      - key: app-name
-#        value: my-app
-#    secrets:
-#      - helmKey: client.secrets.clientId
-#        secretName: client-id
-#        provider: gcp-project
-#      - helmKey: client.secrets.clientSecret
-#        secretName: client-secret
-#        provider: gcp-project
-#      - helmKey: client.secrets.nextAuthUrl
-#        secretName: next-auth-url
-#        provider: gcp-project
-#      - helmKey: client.secrets.nextAuthSecret
-#        secretName: next-auth-secret
-#        provider: gcp-project
+  - id: website
+    type: helm
+    path: helm/website
+    namespace: website-namespace
+    artifacts:
+      - client
+      - api
+    dependencies:
+      - infra
+      - db
+    values:
+      - key: app-name
+        value: website
+    secrets:
+      - helmKey: client.secrets.clientId
+        secretName: client-id
+        provider: gcp-project
+      - helmKey: client.secrets.clientSecret
+        secretName: client-secret
+        provider: gcp-project
+      - helmKey: client.secrets.nextAuthUrl
+        secretName: next-auth-url
+        provider: gcp-project
+      - helmKey: client.secrets.nextAuthSecret
+        secretName: next-auth-secret
+        provider: gcp-project

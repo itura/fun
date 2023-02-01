@@ -14,3 +14,5 @@ if [ "$INSPECT_COVERAGE" == "true" ]; then
 else
   go test  ./... -cover
 fi
+
+go run ./cmd/build generate pkg/build/example/workflow.yaml --config pkg/build/example/pipeline.yaml

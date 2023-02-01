@@ -4,11 +4,47 @@ import (
 	"fmt"
 )
 
-func PostgresHelmChart(builder TestBuilder) Application {
-	return builder.Application("db", "helm/db", typeHelm).
+func ValidPipelineConfig(builder TestBuilder) PipelineConfig {
+	artifactApi := builder.Artifact("api", "packages/api")
+	artifactClient := builder.Artifact("client", "packages/client")
+	appInfra := TerraformConfig(builder, "infra", "tf/main")
+	appDatabase := PostgresHelmChart(builder, appInfra)
+	appWebsite := WebsiteHelmChart(builder, artifactClient, artifactApi, appInfra, appDatabase)
+	return SuccessfulParse(
+		"My Build",
+		map[string]Artifact{
+			"api":    artifactApi,
+			"client": artifactClient,
+		},
+		map[string]Application{
+			"infra":   appInfra,
+			"db":      appDatabase,
+			"website": appWebsite,
+		},
+	)
+}
+
+func TerraformConfig(builder TestBuilder, id string, path string) Application {
+	app := builder.Application(id, path, typeTerraform)
+	return app
+}
+
+func PostgresHelmChart(builder TestBuilder, upstreams ...Job) Application {
+	return builder.Application("db", "helm/db", typeHelm, upstreams...).
+		SetNamespace("db-namespace").
 		AddValue("postgresql.dbName", "my-db").
 		SetSecret("postgresql.auth.password", "gcp-project", "pg-password").
 		SetSecret("postgresql.auth.username", "github", "pg-username")
+}
+
+func WebsiteHelmChart(builder TestBuilder, upstreams ...Job) Application {
+	return builder.Application("website", "helm/website", typeHelm, upstreams...).
+		SetNamespace("website-namespace").
+		AddValue("app-name", "website").
+		SetSecret("client.secrets.clientId", "gcp-project", "client-id").
+		SetSecret("client.secrets.clientSecret", "gcp-project", "client-secret").
+		SetSecret("client.secrets.nextAuthUrl", "gcp-project", "next-auth-url").
+		SetSecret("client.secrets.nextAuthSecret", "gcp-project", "next-auth-secret")
 }
 
 type TestBuilder struct {
@@ -79,8 +115,8 @@ func (b TestBuilder) Application(id string, path string, appType ApplicationType
 		Repository:        b.repository(),
 		KubernetesCluster: b.clusterConfig,
 		CurrentSha:        b.currentSha,
-		Namespace:         "app-namespace",
-		Values:            []HelmValue{},
+		Namespace:         "",
+		Values:            nil,
 		Upstreams:         upstreams,
 		Type:              appType,
 		Secrets:           map[string][]HelmSecretValue{},

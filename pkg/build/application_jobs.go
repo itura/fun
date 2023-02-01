@@ -134,16 +134,16 @@ func GetGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string]
 }
 
 func GetDeployStep(applicationId string, values []HelmValue, resolvedSecrets map[string]string, runCommand string) GitHubActionsStep {
-
-	envMap := map[string]string{}
-
-	for _, helmValue := range values {
-		envVarName := resolveKey(helmValue)
-		envMap[envVarName] = helmValue.Value
-	}
-
-	for envVarName, secret := range resolvedSecrets {
-		envMap[envVarName] = secret
+	var envMap map[string]string
+	if len(resolvedSecrets) > 0 || len(values) > 0 {
+		envMap = map[string]string{}
+		for _, helmValue := range values {
+			envVarName := resolveKey(helmValue)
+			envMap[envVarName] = helmValue.Value
+		}
+		for envVarName, secret := range resolvedSecrets {
+			envMap[envVarName] = secret
+		}
 	}
 
 	return GitHubActionsStep{
