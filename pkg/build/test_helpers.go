@@ -7,7 +7,7 @@ import (
 func PostgresHelmChart(builder TestBuilder) Application {
 	return builder.Application("db", "helm/db", typeHelm).
 		AddValue("postgresql.dbName", "my-db").
-		SetSecret("postgresql.auth.password", "princess-pup", "pg-password").
+		SetSecret("postgresql.auth.password", "gcp-project", "pg-password").
 		SetSecret("postgresql.auth.username", "github", "pg-username")
 }
 
@@ -19,18 +19,17 @@ type TestBuilder struct {
 	secretProviders SecretProviders
 }
 
-func NewTestBuilder(project, currentSha string) TestBuilder {
+func NewTestBuilder(currentSha string) TestBuilder {
 	return TestBuilder{
-		project:    project,
 		currentSha: currentSha,
 		artifactRepo: ArtifactRepository{
 			Host: "us-central1-docker.pkg.dev",
-			Name: "repo-name",
+			Name: "gcp-project/repo-name",
 		},
 		secretProviders: SecretProviders{
-			"princess-pup": {
+			"gcp-project": {
 				Type:   secretProviderTypeGcp,
-				Config: map[string]string{"project": "princess-pup"},
+				Config: map[string]string{"project": "gcp-project"},
 			},
 			"github": {
 				Type:   secretProviderTypeGithub,
@@ -60,14 +59,13 @@ func (b TestBuilder) Artifact(id string, path string, upstreams ...Job) Artifact
 }
 
 func (b TestBuilder) repository() string {
-	return fmt.Sprintf("%s/%s/%s", b.artifactRepo.Host, b.project, b.artifactRepo.Name)
+	return fmt.Sprintf("%s/%s", b.artifactRepo.Host, b.artifactRepo.Name)
 }
 
 func (b TestBuilder) cloudProvider() CloudProviderConfig {
 	return CloudProviderConfig{
 		Type: cloudProviderTypeGcp,
 		Config: map[string]string{
-			"project":                  b.project,
 			"workloadIdentityProvider": "WORKLOAD_IDENTITY_PROVIDER",
 			"serviceAccount":           "BUILD_AGENT_SA",
 		},

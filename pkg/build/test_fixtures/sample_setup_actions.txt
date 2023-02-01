@@ -5,8 +5,8 @@
     - uses: azure/setup-helm@v3
       with:
         version: v3.10.2
-    - id: secrets-princess-pup
+    - id: secrets-gcp-project
       uses: google-github-actions/get-secretmanager-secrets@v1
       with:
         secrets: |-
-            pg-password:princess-pup/pg-password
+            pg-password:gcp-project/pg-password

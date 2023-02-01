@@ -32,7 +32,7 @@ type Application struct {
 	CloudProvider     CloudProviderConfig
 }
 
-func CreateApplications(args ActionArgs, previousSha string, config PipelineConfigRaw, artifacts map[string]Artifact, repository string) (map[string]Application, error) {
+func CreateApplications(args ActionArgs, previousSha string, config PipelineConfigRaw, artifacts map[string]Artifact, artifactRepository string) (map[string]Application, error) {
 	applications := make(map[string]Application)
 	for _, spec := range config.Applications {
 		var upstreams []Job
@@ -79,7 +79,7 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 			Type:              spec.Type,
 			Id:                spec.Id,
 			Path:              spec.Path,
-			Repository:        repository,
+			Repository:        artifactRepository,
 			CurrentSha:        args.CurrentSha,
 			Namespace:         spec.Namespace,
 			Values:            spec.Values,

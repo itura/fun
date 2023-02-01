@@ -155,14 +155,14 @@ jobs:
     - uses: azure/setup-helm@v3
       with:
         version: v3.10.2
-    - id: secrets-princess-pup
+    - id: secrets-gcp-project
       uses: google-github-actions/get-secretmanager-secrets@v1
       with:
         secrets: |-
-            client-id:princess-pup/client-id
-            client-secret:princess-pup/client-secret
-            next-auth-url:princess-pup/next-auth-url
-            next-auth-secret:princess-pup/next-auth-secret
+            client-id:gcp-project/client-id
+            client-secret:gcp-project/client-secret
+            next-auth-url:gcp-project/next-auth-url
+            next-auth-secret:gcp-project/next-auth-secret
 
     - name: Deploy app
       env:

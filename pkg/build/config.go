@@ -19,14 +19,13 @@ func parseConfig(args ActionArgs, previousSha string) PipelineConfig {
 		return FailedParse(config.Name, validationErrors)
 	}
 
-	repository := fmt.Sprintf(
-		"%s/%s/%s",
+	artifactRepository := fmt.Sprintf(
+		"%s/%s",
 		config.Resources.ArtifactRepository.Host,
-		config.Resources.CloudProvider.Config["project"],
 		config.Resources.ArtifactRepository.Name,
 	)
-	artifacts := CreateArtifacts(args, previousSha, config, repository)
-	applications, err := CreateApplications(args, previousSha, config, artifacts, repository)
+	artifacts := CreateArtifacts(args, previousSha, config, artifactRepository)
+	applications, err := CreateApplications(args, previousSha, config, artifacts, artifactRepository)
 	if err != nil {
 		return FailedParse(config.Name, err)
 	}

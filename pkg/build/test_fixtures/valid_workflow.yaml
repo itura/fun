@@ -101,17 +101,17 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: v3.10.2
-      - name: Get Secrets from GCP Provider princess-pup
-        id: secrets-princess-pup
+      - name: Get Secrets from GCP Provider gcp-project
+        id: secrets-gcp-project
         uses: google-github-actions/get-secretmanager-secrets@v1
         with:
           secrets: |-
-            pg-password:princess-pup/pg-password
+            pg-password:gcp-project/pg-password
 
       - name: Deploy db
         env:
           postgresql_dbName: my-db
-          postgresql_auth_password: ${{ steps.secrets-princess-pup.outputs.pg-password }}
+          postgresql_auth_password: ${{ steps.secrets-gcp-project.outputs.pg-password }}
           postgresql_auth_username: ${{ secrets.pg-username }}
         run: |-
           go run github.com/itura/fun/cmd/build@v0.1.19 deploy-application db \

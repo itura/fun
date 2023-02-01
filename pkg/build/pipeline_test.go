@@ -11,7 +11,7 @@ import (
 )
 
 func TestWorkflowGeneration(t *testing.T) {
-	builder := NewTestBuilder("", "currentSha")
+	builder := NewTestBuilder("currentSha")
 	expectedYamlBytes, _ := os.ReadFile("test_fixtures/valid_workflow.yaml")
 	expectedWorkflow := GitHubActionsWorkflow{}
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)
@@ -44,7 +44,7 @@ func TestWorkflowGeneration(t *testing.T) {
 }
 
 func TestDeployTerraformApplication(t *testing.T) {
-	builder := NewTestBuilder("", "currentSha")
+	builder := NewTestBuilder("currentSha")
 
 	terraformApp := builder.Application("infra", "terraform/main", typeTerraform)
 	parsedConfig := SuccessfulParse(
@@ -87,7 +87,7 @@ func TestDeployTerraformApplication(t *testing.T) {
 
 func TestDeployHelmApplication(t *testing.T) {
 	t.Skip("MAKE THIS NOT SUCK")
-	builder := NewTestBuilder("", "currentSha")
+	builder := NewTestBuilder("currentSha")
 
 	dbApp := PostgresHelmChart(builder)
 	parsedConfig := SuccessfulParse(

@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseConfig(t *testing.T) {
-	builder := NewTestBuilder("projectId", "currentSha")
+	builder := NewTestBuilder("currentSha")
 	cases := []struct {
 		args     ActionArgs
 		name     string
@@ -67,7 +67,6 @@ func TestCloudProviderValidations(t *testing.T) {
 	cp := CloudProviderConfig{
 		Type: cloudProviderTypeGcp,
 		Config: fun.NewConfig[string]().
-			Set("project", "wild-west").
 			Set("serviceAccount", "yeehaw@yahoo.com").
 			Set("workloadIdentityProvider", "it me"),
 	}
@@ -89,7 +88,6 @@ func TestCloudProviderValidations(t *testing.T) {
 	assert.Equal(t,
 		NewValidationErrors("cloudProvider").
 			PutChild(NewValidationErrors("config").
-				Put("project", CloudProviderMissingField("gcp")).
 				Put("serviceAccount", CloudProviderMissingField("gcp")).
 				Put("workloadIdentityProvider", CloudProviderMissingField("gcp"))),
 		errs,
@@ -98,7 +96,6 @@ func TestCloudProviderValidations(t *testing.T) {
 	cp = CloudProviderConfig{
 		Type: cloudProviderTypeGcp,
 		Config: fun.NewConfig[string]().
-			Set("project", "wild-west").
 			Set("serviceAccount", "yeehaw@yahoo.com"),
 	}
 	errs = cp.Validate("cloudProvider")

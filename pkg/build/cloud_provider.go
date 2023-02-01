@@ -13,10 +13,6 @@ func (g GCP) Type() string {
 	return "gcp"
 }
 
-func (g GCP) Project() string {
-	return g.Config["project"]
-}
-
 func (g GCP) AuthStep() GitHubActionsStep {
 	return GitHubActionsStep{
 		Name: "Authenticate to GCloud via Service Account",
@@ -30,9 +26,6 @@ func (g GCP) AuthStep() GitHubActionsStep {
 
 func (g GCP) Validate(key string) ValidationErrors {
 	errs := NewValidationErrors(key)
-	if _, ok := g.Config["project"]; !ok {
-		errs = errs.Put("project", CloudProviderMissingField(g.Type()))
-	}
 	if _, ok := g.Config["serviceAccount"]; !ok {
 		errs = errs.Put("serviceAccount", CloudProviderMissingField(g.Type()))
 	}

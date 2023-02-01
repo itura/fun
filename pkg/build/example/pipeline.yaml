@@ -10,14 +10,14 @@ resources:
   secretProviders:
     github:
       type: github-actions
-    princess-pup:
+    gcp-project:
       type: gcp
       config:
-        project: princess-pup
+        project: gcp-project
   cloudProvider:
     type: gcp
     config:
-      project: princess-pup
+      project: gcp-project
       workloadIdentityProvider: WORKLOAD_IDENTITY_PROVIDER
       serviceAccount: BUILD_AGENT_SA
 
@@ -67,13 +67,13 @@ applications:
     secrets:
       - helmKey: client.secrets.clientId
         secretName: client-id
-        provider: princess-pup
+        provider: gcp-project
       - helmKey: client.secrets.clientSecret
         secretName: client-secret
-        provider: princess-pup
+        provider: gcp-project
       - helmKey: client.secrets.nextAuthUrl
         secretName: next-auth-url
-        provider: princess-pup
+        provider: gcp-project
       - helmKey: client.secrets.nextAuthSecret
         secretName: next-auth-secret
-        provider: princess-pup
+        provider: gcp-project

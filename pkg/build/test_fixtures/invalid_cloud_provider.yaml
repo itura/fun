@@ -2,13 +2,13 @@ name: My Build
 
 resources:
   artifactRepository:
-    name: repo-name
+    name: gcp-project/repo-name
 
   secretProviders:
-    princess-pup:
+    gcp-project:
       type: gcp
       config:
-        project: princess-pup
+        project: gcp-project
     github:
       type: github-actions
 
@@ -36,7 +36,7 @@ applications:
     secrets:
       - helmKey: postgresql.auth.password
         secretName: pg-password
-        provider: princess-pup
+        provider: gcp-project
       - helmKey: postgresql.auth.username
         secretName: pg-username
         provider: github
@@ -56,13 +56,13 @@ applications:
 #    secrets:
 #      - helmKey: client.secrets.clientId
 #        secretName: client-id
-#        provider: princess-pup
+#        provider: gcp-project
 #      - helmKey: client.secrets.clientSecret
 #        secretName: client-secret
-#        provider: princess-pup
+#        provider: gcp-project
 #      - helmKey: client.secrets.nextAuthUrl
 #        secretName: next-auth-url
-#        provider: princess-pup
+#        provider: gcp-project
 #      - helmKey: client.secrets.nextAuthSecret
 #        secretName: next-auth-secret
-#        provider: princess-pup
+#        provider: gcp-project
