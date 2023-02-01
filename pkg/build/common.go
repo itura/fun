@@ -32,34 +32,34 @@ type Job interface {
 	JobId() string
 }
 
-type ParsedConfig struct {
+type PipelineConfig struct {
 	Artifacts    fun.Config[Artifact]
 	Applications fun.Config[Application]
 	BuildName    string
 	Error        error
 }
 
-func NewParsedConfig() ParsedConfig {
-	return ParsedConfig{
+func NewParsedConfig() PipelineConfig {
+	return PipelineConfig{
 		Artifacts:    fun.NewConfig[Artifact](),
 		Applications: fun.NewConfig[Application](),
 	}
 }
 
-func SuccessfulParse(name string, artifacts fun.Config[Artifact], applications fun.Config[Application]) ParsedConfig {
+func SuccessfulParse(name string, artifacts fun.Config[Artifact], applications fun.Config[Application]) PipelineConfig {
 	return NewParsedConfig().
 		SetArtifacts(artifacts).
 		SetApplications(applications).
 		SetBuildName(name)
 }
 
-func FailedParse(name string, err error) ParsedConfig {
+func FailedParse(name string, err error) PipelineConfig {
 	return NewParsedConfig().
 		SetBuildName(name).
 		SetError(err)
 }
 
-func (o ParsedConfig) ListArtifacts() []Artifact {
+func (o PipelineConfig) ListArtifacts() []Artifact {
 	var artifacts []Artifact
 	for _, v := range o.Artifacts {
 		artifacts = append(artifacts, v)
@@ -67,7 +67,7 @@ func (o ParsedConfig) ListArtifacts() []Artifact {
 	return artifacts
 }
 
-func (o ParsedConfig) ListApplications() []Application {
+func (o PipelineConfig) ListApplications() []Application {
 	var applications []Application
 	for _, v := range o.Applications {
 		applications = append(applications, v)
@@ -75,22 +75,22 @@ func (o ParsedConfig) ListApplications() []Application {
 	return applications
 }
 
-func (o ParsedConfig) SetArtifacts(artifacts fun.Config[Artifact]) ParsedConfig {
+func (o PipelineConfig) SetArtifacts(artifacts fun.Config[Artifact]) PipelineConfig {
 	o.Artifacts = artifacts
 	return o
 }
 
-func (o ParsedConfig) SetApplications(applications fun.Config[Application]) ParsedConfig {
+func (o PipelineConfig) SetApplications(applications fun.Config[Application]) PipelineConfig {
 	o.Applications = applications
 	return o
 }
 
-func (o ParsedConfig) SetBuildName(name string) ParsedConfig {
+func (o PipelineConfig) SetBuildName(name string) PipelineConfig {
 	o.BuildName = name
 	return o
 }
 
-func (o ParsedConfig) SetError(err error) ParsedConfig {
+func (o PipelineConfig) SetError(err error) PipelineConfig {
 	o.Error = err
 	return o
 }

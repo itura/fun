@@ -13,7 +13,7 @@ func TestParseConfig(t *testing.T) {
 	cases := []struct {
 		args     ActionArgs
 		name     string
-		expected ParsedConfig
+		expected PipelineConfig
 	}{
 		{
 			name: "ValidPipelineConfig",

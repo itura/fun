@@ -10,31 +10,25 @@ import (
 var versionFile embed.FS
 
 type Pipeline struct {
-	artifactsMap    map[string]Artifact
-	applicationsMap map[string]Application
-	ConfigPath      string
-	Artifacts       []Artifact
-	Applications    []Application
-	Name            string
-	Cmd             string
+	config     PipelineConfig
+	ConfigPath string
+	Name       string
+	Cmd        string
 }
 
-func NewPipeline(result ParsedConfig, configPath string, _cmd string) Pipeline {
+func NewPipeline(result PipelineConfig, configPath string, _cmd string) Pipeline {
 	return Pipeline{
-		ConfigPath:      configPath,
-		artifactsMap:    result.Artifacts,
-		Artifacts:       result.ListArtifacts(),
-		applicationsMap: result.Applications,
-		Applications:    result.ListApplications(),
-		Name:            result.BuildName,
-		Cmd:             _cmd,
+		config:     result,
+		ConfigPath: configPath,
+		Name:       result.BuildName,
+		Cmd:        _cmd,
 	}
 }
 
 func ParsePipeline(args ActionArgs, previousSha string) (Pipeline, error) {
-	parsedConfig := parseConfig(args, previousSha)
-	if parsedConfig.Error != nil {
-		return Pipeline{}, parsedConfig.Error
+	config := parseConfig(args, previousSha)
+	if config.Error != nil {
+		return Pipeline{}, config.Error
 	}
 
 	_version, err := versionFile.ReadFile("VERSION")
@@ -48,11 +42,11 @@ func ParsePipeline(args ActionArgs, previousSha string) (Pipeline, error) {
 		_cmd = fmt.Sprintf("github.com/itura/fun/cmd/build@%s", _version)
 	}
 
-	return NewPipeline(parsedConfig, args.ConfigPath, _cmd), nil
+	return NewPipeline(config, args.ConfigPath, _cmd), nil
 }
 
 func (p Pipeline) BuildArtifact(id string) error {
-	artifact, present := p.artifactsMap[id]
+	artifact, present := p.config.Artifacts[id]
 	if !present {
 		return fmt.Errorf("invalid id %s", id)
 	}
@@ -64,7 +58,7 @@ func (p Pipeline) BuildArtifact(id string) error {
 }
 
 func (p Pipeline) DeployApplication(id string) (SideEffects, error) {
-	application, present := p.applicationsMap[id]
+	application, present := p.config.Applications[id]
 	if !present {
 		return SideEffects{}, fmt.Errorf("invalid id %s", id)
 	}
@@ -76,10 +70,10 @@ func (p Pipeline) DeployApplication(id string) (SideEffects, error) {
 func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
 	jobs := map[string]GitHubActionsJob{}
 
-	for id, artifact := range p.artifactsMap {
+	for id, artifact := range p.config.Artifacts {
 		jobs["build-"+id] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
 	}
-	for id, app := range p.applicationsMap {
+	for id, app := range p.config.Applications {
 		jobs["deploy-"+id] = app.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
 	}
 

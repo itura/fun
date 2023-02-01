@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
+func parseConfig(args ActionArgs, previousSha string) PipelineConfig {
 	config, err := readFile(args.ConfigPath)
 	if err != nil {
 		return FailedParse("", err)
@@ -34,22 +34,22 @@ func parseConfig(args ActionArgs, previousSha string) ParsedConfig {
 	return SuccessfulParse(config.Name, artifacts, applications)
 }
 
-func readFile(configPath string) (PipelineConfig, error) {
+func readFile(configPath string) (PipelineConfigRaw, error) {
 	dat, err := os.ReadFile(configPath)
 	if err != nil {
-		return PipelineConfig{}, err
+		return PipelineConfigRaw{}, err
 	}
 
-	var config PipelineConfig
+	var config PipelineConfigRaw
 	err = yaml.Unmarshal(dat, &config)
 	if err != nil {
-		return PipelineConfig{}, err
+		return PipelineConfigRaw{}, err
 	}
 
 	return config, nil
 }
 
-type PipelineConfig struct {
+type PipelineConfigRaw struct {
 	Name      string    `validate:"required"`
 	Resources Resources `validate:"required"`
 	Artifacts []struct {
@@ -70,7 +70,7 @@ type PipelineConfig struct {
 	}
 }
 
-func (p PipelineConfig) Validate(key string) ValidationErrors {
+func (p PipelineConfigRaw) Validate(key string) ValidationErrors {
 	return NewValidationErrors(key).Validate(p)
 }
 

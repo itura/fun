@@ -17,7 +17,7 @@ type Artifact struct {
 	CloudProvider   CloudProviderConfig
 }
 
-func CreateArtifacts(args ActionArgs, previousSha string, config PipelineConfig, repository string) map[string]Artifact {
+func CreateArtifacts(args ActionArgs, previousSha string, config PipelineConfigRaw, repository string) map[string]Artifact {
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
 		var upstreams []Job
