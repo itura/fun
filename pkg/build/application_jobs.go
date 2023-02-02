@@ -52,7 +52,8 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 	if a.Type == typeHelm {
 		steps = append(steps, GetHelmSteps(a.KubernetesCluster)...)
 		if len(a.Secrets) > 0 {
-			steps = append(steps, GetGcpSecretsSteps(a.SecretProviders, a.Secrets)...)
+			secrets := Secrets{Secrets: a.Secrets, SecretProviders: a.SecretProviders}
+			steps = append(steps, secrets.ToGitHubActionsSteps()...)
 		}
 	} else if a.Type == typeTerraform {
 		steps = append(steps, GetTerraformSteps()...)
@@ -99,38 +100,6 @@ func GetTerraformSteps() []GitHubActionsStep {
 			},
 		},
 	}
-}
-
-func GetGcpSecretsSteps(providers map[string]SecretProvider, secrets map[string][]HelmSecretValue) []GitHubActionsStep {
-	gcpSecretsSteps := []GitHubActionsStep{}
-
-	for providerId, providerSecrets := range secrets {
-		if len(providerSecrets) > 0 {
-			provider := providers[providerId]
-			if provider.Type == secretProviderTypeGcp {
-				secrets := []string{}
-
-				for _, secret := range providerSecrets {
-					secrets = append(
-						secrets,
-						fmt.Sprintf("%s:%s/%s", secret.SecretName, provider.Config["project"], secret.SecretName),
-					)
-				}
-
-				step := GitHubActionsStep{
-					Name: fmt.Sprintf("Get Secrets from GCP Provider %s", providerId),
-					Id:   "secrets-" + providerId,
-					Uses: "google-github-actions/get-secretmanager-secrets@v1",
-					With: map[string]interface{}{
-						"secrets": strings.Join(secrets, "\n"),
-					},
-				}
-				gcpSecretsSteps = append(gcpSecretsSteps, step)
-			}
-		}
-	}
-
-	return gcpSecretsSteps
 }
 
 func GetDeployStep(applicationId string, values []HelmValue, resolvedSecrets map[string]string, runCommand string) GitHubActionsStep {

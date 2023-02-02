@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -118,12 +119,11 @@ func (b HelmDeployment) Build() (SideEffects, error) {
 		envValue := strings.ReplaceAll(value.Key, ".", "_")
 		args = append(args, "--set", fmt.Sprintf("%s=$%s", value.Key, envValue))
 	}
-	for _, providerSecret := range b.Secrets {
-		for _, secret := range providerSecret {
-			envVarName := strings.ReplaceAll(secret.HelmKey, ".", "_")
-			args = append(args, "--set", fmt.Sprintf("%s=$%s", secret.HelmKey, envVarName))
-		}
-	}
+
+	secrets := Secrets{Secrets: b.Secrets}
+
+	secretArguments := secrets.SercetsToCLIArgs()
+	args = append(args, secretArguments...)
 
 	return SideEffects{
 		Commands: []Command{
@@ -140,6 +140,89 @@ func (b HelmDeployment) Build() (SideEffects, error) {
 			},
 		},
 	}, nil
+}
+
+type Secrets struct {
+	Secrets         map[string][]HelmSecretValue
+	SecretProviders map[string]SecretProvider
+}
+
+func (b Secrets) SercetsToCLIArgs() []string {
+
+	secretsList := []HelmSecretValue{}
+
+	for _, providerSecret := range b.Secrets {
+		for _, secret := range providerSecret {
+			secretsList = append(secretsList, secret)
+		}
+	}
+
+	sort.Slice(secretsList, func(i, j int) bool {
+		return secretsList[i].HelmKey < secretsList[j].HelmKey
+	})
+
+	arguments := []string{}
+
+	for _, secret := range secretsList {
+		envVarName := strings.ReplaceAll(secret.HelmKey, ".", "_")
+		arguments = append(arguments, "--set", fmt.Sprintf("%s=$%s", secret.HelmKey, envVarName))
+	}
+
+	return arguments
+}
+
+func (b Secrets) Resolve() map[string]string {
+	secretMappings := map[string]string{}
+
+	for providerId, secrets := range b.Secrets {
+		provider := b.SecretProviders[providerId]
+		for _, secret := range secrets {
+			envVarName := strings.ReplaceAll(secret.HelmKey, ".", "_")
+			switch provider.Type {
+			case secretProviderTypeGcp:
+				secretValue := fmt.Sprintf("${{ steps.secrets-%s.outputs.%s }}", providerId, secret.SecretName)
+
+				secretMappings[envVarName] = secretValue
+			case secretProviderTypeGithub:
+				secretValue := fmt.Sprintf("${{ secrets.%s }}", secret.SecretName)
+
+				secretMappings[envVarName] = secretValue
+			}
+		}
+	}
+	return secretMappings
+}
+
+func (b Secrets) ToGitHubActionsSteps() []GitHubActionsStep {
+	gcpSecretsSteps := []GitHubActionsStep{}
+
+	for providerId, providerSecrets := range b.Secrets {
+		if len(providerSecrets) > 0 {
+			provider := b.SecretProviders[providerId]
+			if provider.Type == secretProviderTypeGcp {
+				secrets := []string{}
+
+				for _, secret := range providerSecrets {
+					secrets = append(
+						secrets,
+						fmt.Sprintf("%s:%s/%s", secret.SecretName, provider.Config["project"], secret.SecretName),
+					)
+				}
+
+				step := GitHubActionsStep{
+					Name: fmt.Sprintf("Get Secrets from GCP Provider %s", providerId),
+					Id:   "secrets-" + providerId,
+					Uses: "google-github-actions/get-secretmanager-secrets@v1",
+					With: map[string]interface{}{
+						"secrets": strings.Join(secrets, "\n"),
+					},
+				}
+				gcpSecretsSteps = append(gcpSecretsSteps, step)
+			}
+		}
+	}
+
+	return gcpSecretsSteps
 }
 
 type TfConfig struct {

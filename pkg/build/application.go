@@ -2,7 +2,6 @@ package build
 
 import (
 	"fmt"
-	"strings"
 )
 
 type HelmValue struct {
@@ -140,23 +139,6 @@ func (a Application) SetNamespace(namespace string) Application {
 }
 
 func (a Application) ResolveSecrets() map[string]string {
-	secretMappings := map[string]string{}
-
-	for providerId, secrets := range a.Secrets {
-		provider := a.SecretProviders[providerId]
-		for _, secret := range secrets {
-			envVarName := strings.ReplaceAll(secret.HelmKey, ".", "_")
-			switch provider.Type {
-			case secretProviderTypeGcp:
-				secretValue := fmt.Sprintf("${{ steps.secrets-%s.outputs.%s }}", providerId, secret.SecretName)
-
-				secretMappings[envVarName] = secretValue
-			case secretProviderTypeGithub:
-				secretValue := fmt.Sprintf("${{ secrets.%s }}", secret.SecretName)
-
-				secretMappings[envVarName] = secretValue
-			}
-		}
-	}
-	return secretMappings
+	secrets := Secrets{SecretProviders: a.SecretProviders, Secrets: a.Secrets}
+	return secrets.Resolve()
 }
