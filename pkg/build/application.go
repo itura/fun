@@ -95,7 +95,7 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 	return applications, nil
 }
 
-func (a Application) PrepareBuild1() Build1 {
+func (a Application) PrepareBuild() Build {
 	switch a.Type {
 	case typeTerraform:
 		return NewTerraform(a)
@@ -103,17 +103,6 @@ func (a Application) PrepareBuild1() Build1 {
 		return NewHelm(a)
 	default:
 		return NullBuild{}
-	}
-}
-
-func (a Application) PrepareBuild() (Build, error) {
-	switch a.Type {
-	case typeHelm:
-		return NewHelm(a), nil
-	case typeTerraform:
-		return NewTerraform(a), nil
-	default:
-		return NullBuild{}, fmt.Errorf("invalid application type %s", a.Type)
 	}
 }
 

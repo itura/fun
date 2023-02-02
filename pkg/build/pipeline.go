@@ -50,11 +50,11 @@ func (p Pipeline) BuildArtifact(id string) (SideEffects, error) {
 	if !present {
 		return SideEffects{}, fmt.Errorf("invalid id %s", id)
 	}
-	build, err := artifact.PrepareBuild1()
+	build, err := artifact.PrepareBuild()
 	if err != nil {
 		return SideEffects{}, err
 	}
-	return build.Build1()
+	return build.Build()
 }
 
 func (p Pipeline) DeployApplication(id string) (SideEffects, error) {
@@ -62,9 +62,9 @@ func (p Pipeline) DeployApplication(id string) (SideEffects, error) {
 	if !present {
 		return SideEffects{}, fmt.Errorf("invalid id %s", id)
 	}
-	build := application.PrepareBuild1()
+	build := application.PrepareBuild()
 
-	return build.Build1()
+	return build.Build()
 }
 
 func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {

@@ -33,8 +33,8 @@ func PostgresHelmChart(builder TestBuilder, upstreams ...Job) Application {
 	return builder.Application("db", "helm/db", typeHelm, upstreams...).
 		SetNamespace("db-namespace").
 		AddValue("postgresql.dbName", "my-db").
-		SetSecret("postgresql.auth.password", "gcp-project", "pg-password").
-		SetSecret("postgresql.auth.username", "github", "pg-username")
+		SetSecret("postgresql.auth.username", "github", "pg-username").
+		SetSecret("postgresql.auth.password", "gcp-project", "pg-password")
 }
 
 func WebsiteHelmChart(builder TestBuilder, upstreams ...Job) Application {

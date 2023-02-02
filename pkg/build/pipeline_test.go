@@ -120,9 +120,9 @@ func TestDeployHelmApplication(t *testing.T) {
 				"--set",
 				"postgresql.dbName=$postgresql_dbName",
 				"--set",
-				"postgresql.auth.password=$postgresql_auth_password",
-				"--set",
 				"postgresql.auth.username=$postgresql_auth_username",
+				"--set",
+				"postgresql.auth.password=$postgresql_auth_password",
 			}},
 	}, sideEffects.Commands)
 
