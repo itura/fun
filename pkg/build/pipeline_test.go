@@ -18,7 +18,7 @@ func TestWorkflowGeneration(t *testing.T) {
 	assert.Nil(t, err)
 
 	piplineConfig := ValidPipelineConfig(builder)
-	pipeline := NewPipeline(piplineConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.22")
+	pipeline := NewPipeline(piplineConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.23")
 
 	workflow := pipeline.ToGitHubWorkflow()
 

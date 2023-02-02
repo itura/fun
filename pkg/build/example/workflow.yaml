@@ -30,7 +30,7 @@ jobs:
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
       - name: Build api
         run: |-
-          go run github.com/itura/fun/cmd/build@v0.1.22 build-artifact api \
+          go run github.com/itura/fun/cmd/build@v0.1.23 build-artifact api \
             --config pkg/build/example/pipeline.yaml \
             --current-sha $GITHUB_SHA
   build-client:
@@ -61,7 +61,7 @@ jobs:
         run: gcloud --quiet auth configure-docker us-central1-docker.pkg.dev
       - name: Build client
         run: |-
-          go run github.com/itura/fun/cmd/build@v0.1.22 build-artifact client \
+          go run github.com/itura/fun/cmd/build@v0.1.23 build-artifact client \
             --config pkg/build/example/pipeline.yaml \
             --current-sha $GITHUB_SHA
   deploy-app:
@@ -115,7 +115,7 @@ jobs:
           client_secrets_nextAuthSecret: ${{ steps.secrets-gcp-project.outputs.next-auth-secret }}
           client_secrets_nextAuthUrl: ${{ steps.secrets-gcp-project.outputs.next-auth-url }}
         run: |-
-          go run github.com/itura/fun/cmd/build@v0.1.22 deploy-application app \
+          go run github.com/itura/fun/cmd/build@v0.1.23 deploy-application app \
             --config pkg/build/example/pipeline.yaml \
             --current-sha $GITHUB_SHA
   deploy-db:
@@ -155,7 +155,7 @@ jobs:
           postgresql_auth_postgresPassword: ${{ secrets.pg-admin-password }}
           postgresql_dbName: my-db
         run: |-
-          go run github.com/itura/fun/cmd/build@v0.1.22 deploy-application db \
+          go run github.com/itura/fun/cmd/build@v0.1.23 deploy-application db \
             --config pkg/build/example/pipeline.yaml \
             --current-sha $GITHUB_SHA
   deploy-infra:
@@ -184,6 +184,6 @@ jobs:
           terraform_version: 1.3.6
       - name: Deploy infra
         run: |-
-          go run github.com/itura/fun/cmd/build@v0.1.22 deploy-application infra \
+          go run github.com/itura/fun/cmd/build@v0.1.23 deploy-application infra \
             --config pkg/build/example/pipeline.yaml \
             --current-sha $GITHUB_SHA
