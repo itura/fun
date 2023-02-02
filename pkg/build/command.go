@@ -10,6 +10,13 @@ type Command struct {
 	Arguments []string
 }
 
+func NewCommand(name string, args ...string) Command {
+	return Command{
+		Name:      name,
+		Arguments: args,
+	}
+}
+
 func (s SideEffects) Apply() error {
 	for _, command := range s.Commands {
 		err := s.Runner.Run(command.Name, command.Arguments...)
@@ -22,8 +29,9 @@ func (s SideEffects) Apply() error {
 	return nil
 }
 
-func (s *SideEffects) AddCommand(command Command) {
-	s.Commands = append(s.Commands, command)
+func (s SideEffects) Add(commands ...Command) SideEffects {
+	s.Commands = append(s.Commands, commands...)
+	return s
 }
 
 type CommandRunner interface {

@@ -138,36 +138,24 @@ func (b DockerImage) Build1() (SideEffects, error) {
 	greenTag := b.AppImageName(b.GreenTag())
 
 	if b.hasChanged {
-		sideEffects.AddCommand(Command{
-			Name: "docker",
-			Arguments: []string{
-				"build",
+		sideEffects = sideEffects.Add(
+			NewCommand("docker", "build",
 				"-f", b.dockerfile,
 				"-t", b.AppImageName(b.CurrentSha),
 				"--target", b.AppTarget(),
-			},
-		})
-		sideEffects.AddCommand(Command{
-			Name:      "docker",
-			Arguments: []string{"tag", commitTag, greenTag},
-		})
-		sideEffects.AddCommand(Command{
-			Name:      "docker",
-			Arguments: []string{"push", "--all-tags", b.AppImageBase()},
-		})
+			),
+			NewCommand("docker", "tag", commitTag, greenTag),
+			NewCommand("docker", "push",
+				"--all-tags",
+				b.AppImageBase(),
+			),
+		)
 	} else {
-		sideEffects.AddCommand(Command{
-			Name:      "docker",
-			Arguments: []string{"pull", greenTag},
-		})
-		sideEffects.AddCommand(Command{
-			Name:      "docker",
-			Arguments: []string{"tag", greenTag, commitTag},
-		})
-		sideEffects.AddCommand(Command{
-			Name:      "docker",
-			Arguments: []string{"push", commitTag},
-		})
+		sideEffects = sideEffects.Add(
+			NewCommand("docker", "pull", greenTag),
+			NewCommand("docker", "tag", greenTag, commitTag),
+			NewCommand("docker", "push", commitTag),
+		)
 	}
 	return sideEffects, nil
 }
