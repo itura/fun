@@ -119,11 +119,6 @@ func (b HelmDeployment) Build() (SideEffects, error) {
 		args = append(args, "--set", fmt.Sprintf("%s=$%s", arg.Key, arg.EnvKey()))
 	}
 
-	secrets := Secrets{Secrets: b.Secrets}
-
-	secretArguments := secrets.SercetsToCLIArgs()
-	args = append(args, secretArguments...)
-
 	return SideEffects{
 		Commands: []Command{
 			{

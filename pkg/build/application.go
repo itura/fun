@@ -138,11 +138,6 @@ func (a Application) SetNamespace(namespace string) Application {
 	return a
 }
 
-func (a Application) ResolveSecrets() map[string]string {
-	secrets := Secrets{SecretProviders: a.SecretProviders, Secrets: a.Secrets}
-	return secrets.Resolve()
-}
-
 func (a Application) AddStep(steps ...GitHubActionsStep) Application {
 	a.Steps = append(a.Steps, steps...)
 	return a

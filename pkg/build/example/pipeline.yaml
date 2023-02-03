@@ -67,6 +67,7 @@ applications:
     secrets:
       - helmKey: client.secrets.clientId
         secretName: client-id
+        provider: gcp-project
       - helmKey: client.secrets.clientSecret
         secretName: client-secret
         provider: gcp-project

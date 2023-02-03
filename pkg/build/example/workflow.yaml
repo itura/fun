@@ -89,15 +89,6 @@ jobs:
         with:
           service_account: ${{ secrets.BUILD_AGENT_SA }}
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-      - name: Authenticate to GKE Cluster
-        uses: google-github-actions/get-gke-credentials@v1
-        with:
-          cluster_name: cluster-name
-          location: uscentral1
-      - name: Setup Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: v3.10.2
       - id: secrets-gcp-project
         name: Get Secrets from GCP Provider gcp-project
         uses: google-github-actions/get-secretmanager-secrets@v1
@@ -107,6 +98,15 @@ jobs:
             client-secret:gcp-project/client-secret
             next-auth-url:gcp-project/next-auth-url
             next-auth-secret:gcp-project/next-auth-secret
+      - name: Authenticate to GKE Cluster
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: cluster-name
+          location: uscentral1
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.2
       - name: Deploy app
         env:
           app-name: my-app
