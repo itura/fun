@@ -90,7 +90,7 @@ func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
 	return workflow
 }
 
-func resolveKey(value HelmValue) string {
+func resolveKey(value RuntimeArg) string {
 	return strings.ReplaceAll(value.Key, ".", "_")
 }
 

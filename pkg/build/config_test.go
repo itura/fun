@@ -102,11 +102,11 @@ func TestCloudProviderValidations(t *testing.T) {
 
 func TestSecretProvidersValidation(t *testing.T) {
 	sp := SecretProviders{
-		"one": SecretProvider{
+		"one": SecretProviderRaw{
 			Type:   secretProviderTypeGithub,
 			Config: nil,
 		},
-		"two": SecretProvider{
+		"two": SecretProviderRaw{
 			Type: secretProviderTypeGcp,
 			Config: fun.Config[string]{
 				"project": "cool-proj",
@@ -121,11 +121,11 @@ func TestSecretProvidersValidation(t *testing.T) {
 func TestResourcesValidation(t *testing.T) {
 	resources := Resources{
 		SecretProviders: SecretProviders{
-			"one": SecretProvider{
+			"one": SecretProviderRaw{
 				Type:   secretProviderTypeGithub,
 				Config: nil,
 			},
-			"two": SecretProvider{
+			"two": SecretProviderRaw{
 				Type: secretProviderTypeGcp,
 				Config: fun.Config[string]{
 					"project": "cool-proj",
@@ -153,13 +153,13 @@ func TestResourcesValidation(t *testing.T) {
 
 	resources = Resources{
 		SecretProviders: SecretProviders{
-			"two": SecretProvider{
+			"two": SecretProviderRaw{
 				Type: secretProviderTypeGcp,
 				Config: fun.Config[string]{
 					"project": "cool-proj",
 				},
 			},
-			"four": SecretProvider{},
+			"four": SecretProviderRaw{},
 		},
 		CloudProvider: CloudProviderConfig{
 			Type: cloudProviderTypeGcp,

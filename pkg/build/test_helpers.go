@@ -25,26 +25,43 @@ func ValidPipelineConfig(builder TestBuilder) PipelineConfig {
 }
 
 func TerraformConfig(builder TestBuilder, id string, path string) Application {
-	app := builder.Application(id, path, typeTerraform)
+	app := builder.Application(id, path, typeTerraform).
+		AddStep(
+			CheckoutRepoStep(),
+			SetupGoStep(),
+			GcpAuthStep("${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}", "${{ secrets.BUILD_AGENT_SA }}"),
+		)
 	return app
 }
 
 func PostgresHelmChart(builder TestBuilder, upstreams ...Job) Application {
 	return builder.Application("db", "helm/db", typeHelm, upstreams...).
 		SetNamespace("db-namespace").
-		AddValue("postgresql.dbName", "my-db").
-		SetSecret("postgresql.auth.username", "github", "pg-username").
-		SetSecret("postgresql.auth.password", "gcp-project", "pg-password")
+		AddRuntimeArg("postgresql.dbName", "my-db").
+		AddRuntimeArg("postgresql.auth.password", "${{ steps.secrets-gcp-project.outputs.pg-password }}").
+		AddRuntimeArg("postgresql.auth.username", "${{ secrets.pg-username }}").
+		AddStep(
+			CheckoutRepoStep(),
+			SetupGoStep(),
+			GcpAuthStep("${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}", "${{ secrets.BUILD_AGENT_SA }}"),
+			FetchGcpSecretsStep("gcp-project", "gcp-project", "pg-password"),
+		)
 }
 
 func WebsiteHelmChart(builder TestBuilder, upstreams ...Job) Application {
 	return builder.Application("website", "helm/website", typeHelm, upstreams...).
 		SetNamespace("website-namespace").
-		AddValue("app-name", "website").
-		SetSecret("client.secrets.clientId", "gcp-project", "client-id").
-		SetSecret("client.secrets.clientSecret", "gcp-project", "client-secret").
-		SetSecret("client.secrets.nextAuthUrl", "gcp-project", "next-auth-url").
-		SetSecret("client.secrets.nextAuthSecret", "gcp-project", "next-auth-secret")
+		AddRuntimeArg("app-name", "website").
+		AddRuntimeArg("client.secrets.clientId", "${{ steps.secrets-gcp-project.outputs.client-id }}").
+		AddRuntimeArg("client.secrets.clientSecret", "${{ steps.secrets-gcp-project.outputs.client-secret }}").
+		AddRuntimeArg("client.secrets.nextAuthSecret", "${{ steps.secrets-gcp-project.outputs.next-auth-secret }}").
+		AddRuntimeArg("client.secrets.nextAuthUrl", "${{ steps.secrets-gcp-project.outputs.next-auth-url }}").
+		AddStep(
+			CheckoutRepoStep(),
+			SetupGoStep(),
+			GcpAuthStep("${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}", "${{ secrets.BUILD_AGENT_SA }}"),
+			FetchGcpSecretsStep("gcp-project", "gcp-project", "client-id", "client-secret", "next-auth-url", "next-auth-secret"),
+		)
 }
 
 type TestBuilder struct {
@@ -116,11 +133,9 @@ func (b TestBuilder) Application(id string, path string, appType ApplicationType
 		KubernetesCluster: b.clusterConfig,
 		CurrentSha:        b.currentSha,
 		Namespace:         "",
-		Values:            nil,
+		RuntimeArgs:       nil,
 		Upstreams:         upstreams,
 		Type:              appType,
-		Secrets:           map[string][]HelmSecretValue{},
-		SecretProviders:   b.secretProviders,
 		hasDependencies:   len(upstreams) > 0,
 		hasChanged:        true,
 		CloudProvider:     b.cloudProvider(),

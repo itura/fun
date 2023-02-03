@@ -25,45 +25,17 @@ func (a Application) ToGitHubActionsJob(cmd string, configPath string) GitHubAct
 }
 
 func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep {
-	checkoutStep := GitHubActionsStep{
-		Name: "Checkout Repo",
-		Uses: "actions/checkout@v3",
-		With: map[string]interface{}{
-			"fetch-depth": 2,
-		},
-	}
-
-	setupGoStep := GitHubActionsStep{
-		Name: "Setup Go",
-		Uses: "actions/setup-go@v3",
-		With: map[string]interface{}{
-			"go-version": "1.19",
-		},
-	}
-
-	cloudProviderAuthStep := a.CloudProvider.Impl().AuthStep()
-
-	steps := []GitHubActionsStep{
-		checkoutStep,
-		setupGoStep,
-		cloudProviderAuthStep,
-	}
-
 	if a.Type == typeHelm {
-		steps = append(steps, GetHelmSteps(a.KubernetesCluster)...)
-		if len(a.Secrets) > 0 {
-			secrets := Secrets{Secrets: a.Secrets, SecretProviders: a.SecretProviders}
-			steps = append(steps, secrets.ToGitHubActionsSteps()...)
-		}
+		a.Steps = append(a.Steps, GetHelmSteps(a.KubernetesCluster)...)
 	} else if a.Type == typeTerraform {
-		steps = append(steps, GetTerraformSteps()...)
+		a.Steps = append(a.Steps, GetTerraformSteps()...)
 	}
 
-	deployStep := GetDeployStep(a.Id, a.Values, a.ResolveSecrets(), GetDeployRunCommand(a.Id, cmd, configPath))
+	deployStep := GetDeployStep(a.Id, a.RuntimeArgs, GetDeployRunCommand(a.Id, cmd, configPath))
 
-	steps = append(steps, deployStep)
+	a.Steps = append(a.Steps, deployStep)
 
-	return steps
+	return a.Steps
 }
 
 func GetHelmSteps(cluster ClusterConfig) []GitHubActionsStep {
@@ -102,16 +74,12 @@ func GetTerraformSteps() []GitHubActionsStep {
 	}
 }
 
-func GetDeployStep(applicationId string, values []HelmValue, resolvedSecrets map[string]string, runCommand string) GitHubActionsStep {
+func GetDeployStep(applicationId string, runtimeArgs []RuntimeArg, runCommand string) GitHubActionsStep {
 	var envMap map[string]string
-	if len(resolvedSecrets) > 0 || len(values) > 0 {
+	if len(runtimeArgs) > 0 {
 		envMap = map[string]string{}
-		for _, helmValue := range values {
-			envVarName := resolveKey(helmValue)
-			envMap[envVarName] = helmValue.Value
-		}
-		for envVarName, secret := range resolvedSecrets {
-			envMap[envVarName] = secret
+		for _, arg := range runtimeArgs {
+			envMap[arg.EnvKey()] = arg.Value
 		}
 	}
 

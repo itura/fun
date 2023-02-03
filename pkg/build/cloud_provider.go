@@ -14,14 +14,10 @@ func (g GCP) Type() string {
 }
 
 func (g GCP) AuthStep() GitHubActionsStep {
-	return GitHubActionsStep{
-		Name: "Authenticate to GCloud via Service Account",
-		Uses: "google-github-actions/auth@v1",
-		With: map[string]interface{}{
-			"workload_identity_provider": formatSecretValue(g.Config["workloadIdentityProvider"]),
-			"service_account":            formatSecretValue(g.Config["serviceAccount"]),
-		},
-	}
+	return GcpAuthStep(
+		formatSecretValue(g.Config["workloadIdentityProvider"]),
+		formatSecretValue(g.Config["serviceAccount"]),
+	)
 }
 
 func (g GCP) Validate(key string) ValidationErrors {

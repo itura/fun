@@ -2,11 +2,16 @@ package build
 
 import (
 	"fmt"
+	"strings"
 )
 
-type HelmValue struct {
+type RuntimeArg struct {
 	Key   string
 	Value string
+}
+
+func (r RuntimeArg) EnvKey() string {
+	return strings.ReplaceAll(r.Key, ".", "_")
 }
 
 type HelmSecretValue struct {
@@ -21,14 +26,15 @@ type Application struct {
 	KubernetesCluster ClusterConfig
 	CurrentSha        string
 	Namespace         string
-	Values            []HelmValue
+	RuntimeArgs       []RuntimeArg
 	Upstreams         []Job
 	Type              ApplicationType
 	Secrets           map[string][]HelmSecretValue
-	SecretProviders   map[string]SecretProvider
+	SecretProviders   map[string]SecretProviderRaw
 	hasDependencies   bool
 	hasChanged        bool
 	CloudProvider     CloudProviderConfig
+	Steps             []GitHubActionsStep
 }
 
 func CreateApplications(args ActionArgs, previousSha string, config PipelineConfigRaw, artifacts map[string]Artifact, artifactRepository string) (map[string]Application, error) {
@@ -54,23 +60,34 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 			cd = _cd
 		}
 
-		var secretConfigs = spec.Secrets
+		var runTimeArgs []RuntimeArg
+		for _, arg := range spec.Values {
+			runTimeArgs = append(runTimeArgs, RuntimeArg{
+				Key:   arg.Key,
+				Value: arg.Value,
+			})
+		}
+		setupSteps := []GitHubActionsStep{
+			CheckoutRepoStep(),
+			SetupGoStep(),
+			config.Resources.CloudProvider.Impl().AuthStep(),
+		}
 
-		helmSecretValues := make(map[string][]HelmSecretValue, len(secretConfigs))
-		for _, secretConfig := range secretConfigs {
-			_, ok := config.Resources.SecretProviders[secretConfig.Provider]
-
-			if !ok {
-				return nil, MissingSecretProvider{}
+		numFound := 0
+		for id, secretProviderConfig := range config.Resources.SecretProviders {
+			secretProvider := secretProviderConfig.Impl(id)
+			for _, secretConfig := range spec.Secrets {
+				if secretConfig.Provider == id {
+					numFound++
+					secretProvider = secretProvider.Add(secretConfig.HelmKey, secretConfig.SecretName)
+				}
 			}
+			runTimeArgs = append(runTimeArgs, secretProvider.GetRuntimeArgs()...)
+			setupSteps = append(setupSteps, secretProvider.GenerateFetchSteps()...)
+		}
 
-			helmSecretValue := HelmSecretValue{
-				HelmKey:    secretConfig.HelmKey,
-				SecretName: secretConfig.SecretName,
-			}
-
-			providerSecretsList := helmSecretValues[secretConfig.Provider]
-			helmSecretValues[secretConfig.Provider] = append(providerSecretsList, helmSecretValue)
+		if numFound != len(spec.Secrets) {
+			return nil, MissingSecretProvider{}
 		}
 
 		hasDependencies := len(spec.Dependencies) > 0 || len(spec.Artifacts) > 0
@@ -81,14 +98,13 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 			Repository:        artifactRepository,
 			CurrentSha:        args.CurrentSha,
 			Namespace:         spec.Namespace,
-			Values:            spec.Values,
+			RuntimeArgs:       runTimeArgs,
 			Upstreams:         upstreams,
 			hasDependencies:   hasDependencies,
 			KubernetesCluster: config.Resources.KubernetesCluster,
-			Secrets:           helmSecretValues,
-			SecretProviders:   config.Resources.SecretProviders,
 			hasChanged:        cd.HasChanged(),
 			CloudProvider:     config.Resources.CloudProvider,
+			Steps:             setupSteps,
 		}
 	}
 	return applications, nil
@@ -109,26 +125,10 @@ func (a Application) JobId() string {
 	return fmt.Sprintf("deploy-%s", a.Id)
 }
 
-func (a Application) HasDependencies() bool {
-	return a.hasDependencies
-}
-
-func (a Application) AddValue(key, value string) Application {
-	a.Values = append(a.Values, HelmValue{
+func (a Application) AddRuntimeArg(key, value string) Application {
+	a.RuntimeArgs = append(a.RuntimeArgs, RuntimeArg{
 		Key:   key,
 		Value: value,
-	})
-	return a
-}
-
-func (a Application) SetSecret(key, provider, name string) Application {
-	value, present := a.Secrets[provider]
-	if !present {
-		value = []HelmSecretValue{}
-	}
-	a.Secrets[provider] = append(value, HelmSecretValue{
-		HelmKey:    key,
-		SecretName: name,
 	})
 	return a
 }
@@ -141,4 +141,9 @@ func (a Application) SetNamespace(namespace string) Application {
 func (a Application) ResolveSecrets() map[string]string {
 	secrets := Secrets{SecretProviders: a.SecretProviders, Secrets: a.Secrets}
 	return secrets.Resolve()
+}
+
+func (a Application) AddStep(steps ...GitHubActionsStep) Application {
+	a.Steps = append(a.Steps, steps...)
+	return a
 }

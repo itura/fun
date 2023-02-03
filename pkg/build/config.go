@@ -62,7 +62,7 @@ type PipelineConfigRaw struct {
 		Path         string
 		Namespace    string
 		Artifacts    []string
-		Values       []HelmValue
+		Values       []RuntimeArg
 		Secrets      []SecretConfig
 		Dependencies []string
 		Type         ApplicationType
@@ -121,9 +121,22 @@ func (c CloudProviderConfig) Validate(key string) ValidationErrors {
 		PutChild(c.Impl().Validate("config"))
 }
 
-type SecretProvider struct {
+type SecretProviderRaw struct {
 	Type   SecretProviderType `validate:"required"`
 	Config map[string]string
+}
+
+func (s SecretProviderRaw) Impl(id string) SecretProvider {
+	switch s.Type {
+	case secretProviderTypeGithub:
+		return GitHubActionsSecretProvider{}
+	case secretProviderTypeGcp:
+		return GcpSecretProvider{
+			project: s.Config["project"],
+			id:      id,
+		}
+	}
+	return nil
 }
 
 type SecretConfig struct {
@@ -132,11 +145,11 @@ type SecretConfig struct {
 	Provider   string
 }
 
-func (s SecretProvider) Validate(key string) ValidationErrors {
+func (s SecretProviderRaw) Validate(key string) ValidationErrors {
 	return NewValidationErrors(key).ValidateTags(s)
 }
 
-type SecretProviders fun.Config[SecretProvider]
+type SecretProviders fun.Config[SecretProviderRaw]
 
 func (s SecretProviders) Validate(key string) ValidationErrors {
 	errs := NewValidationErrors(key)
