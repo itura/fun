@@ -40,6 +40,7 @@ func (b PackageVerifier) Build() (SideEffects, error) {
 					"-f", b.dockerfile,
 					"-t", b.VerifyImageName(),
 					"--target", b.VerifyTarget(),
+					b.workdir,
 				},
 			},
 			{
@@ -78,6 +79,7 @@ func (b DockerImage) Build() (SideEffects, error) {
 				"-f", b.dockerfile,
 				"-t", b.AppImageName(b.CurrentSha),
 				"--target", b.AppTarget(),
+				b.workdir,
 			),
 			NewCommand("docker", "tag", commitTag, greenTag),
 			NewCommand("docker", "push",

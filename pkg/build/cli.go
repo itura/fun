@@ -62,7 +62,7 @@ func (c BuildArtifactCommand) Run() error {
 		return err
 	}
 
-	err = sideEffects.Apply()
+	err = sideEffects.Apply(ShellCommandRunner{})
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (c DeployApplicationCommand) Run() error {
 		return err
 	}
 
-	err = sideEffects.Apply()
+	err = sideEffects.Apply(ShellCommandRunner{})
 	if err != nil {
 		return err
 	}

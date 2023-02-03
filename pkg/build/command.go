@@ -2,7 +2,6 @@ package build
 
 type SideEffects struct {
 	Commands []Command
-	Runner   CommandRunner
 }
 
 type Command struct {
@@ -17,9 +16,9 @@ func NewCommand(name string, args ...string) Command {
 	}
 }
 
-func (s SideEffects) Apply() error {
+func (s SideEffects) Apply(r CommandRunner) error {
 	for _, command := range s.Commands {
-		err := s.Runner.Run(command.Name, command.Arguments...)
+		err := r.Run(command.Name, command.Arguments...)
 
 		if err != nil {
 			return err

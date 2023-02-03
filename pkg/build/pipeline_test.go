@@ -152,6 +152,7 @@ func TestBuildChangedApplicationArtifact(t *testing.T) {
 				"-f", fmt.Sprintf("%s/Dockerfile", clientArtifact.Path),
 				"-t", "us-central1-docker.pkg.dev/gcp-project/repo-name/client-test:currentSha",
 				"--target", "test",
+				"pkgs/client",
 			},
 		},
 		{
@@ -169,6 +170,7 @@ func TestBuildChangedApplicationArtifact(t *testing.T) {
 				"-f", fmt.Sprintf("%s/Dockerfile", clientArtifact.Path),
 				"-t", "us-central1-docker.pkg.dev/gcp-project/repo-name/client-app:currentSha",
 				"--target", "app",
+				"pkgs/client",
 			},
 		},
 		{

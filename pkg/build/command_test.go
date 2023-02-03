@@ -27,13 +27,12 @@ func TestApplySideEffectsRunsCommands(t *testing.T) {
 				},
 			},
 		},
-		Runner: runner,
 	}
 
 	runner.On("Run", "name", "arg1", "arg2").Return(nil)
 	runner.On("Run", "name", "arg3", "arg4").Return(nil)
 
-	err := sideEffects.Apply()
+	err := sideEffects.Apply(runner)
 	assert.Nil(t, err)
 	runner.AssertExpectations(t)
 
@@ -58,14 +57,13 @@ func TestApplySideEffectsReturnsFirstError(t *testing.T) {
 				},
 			},
 		},
-		Runner: runner,
 	}
 
 	expectedErr := fmt.Errorf("Failed to run command")
 
 	runner.On("Run", "name", "arg1", "arg2").Return(expectedErr)
 
-	returnedErr := sideEffects.Apply()
+	returnedErr := sideEffects.Apply(runner)
 
 	assert.Equal(t, expectedErr, returnedErr)
 	runner.AssertExpectations(t)
