@@ -103,9 +103,10 @@ func NewTerraform(a Application) TfConfig {
 }
 
 func (b TfConfig) Build() (SideEffects, error) {
+	chdir := fmt.Sprintf("-chdir=%s", b.Path)
 	return NewSideEffects(
-		NewCommand("terraform", "-chdir=terraform/main", "init"),
-		NewCommand("terraform", "-chdir=terraform/main", "plan", "-out=plan.out"),
-		NewCommand("terraform", "-chdir=terraform/main", "apply", "plan.out"),
+		NewCommand("terraform", chdir, "init"),
+		NewCommand("terraform", chdir, "plan", "-out=plan.out"),
+		NewCommand("terraform", chdir, "apply", "plan.out"),
 	), nil
 }
