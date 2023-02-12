@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/itura/fun/pkg/fun"
 	"strings"
 )
 
@@ -74,7 +75,9 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 		}
 
 		numFound := 0
-		for id, secretProviderConfig := range config.Resources.SecretProviders {
+		var secretProviders = config.Resources.SecretProviders
+		for e := range fun.MapEntriesOrdered(secretProviders) {
+			id, secretProviderConfig := e.Get()
 			secretProvider := secretProviderConfig.Impl(id)
 			for _, secretConfig := range spec.Secrets {
 				if secretConfig.Provider == id {

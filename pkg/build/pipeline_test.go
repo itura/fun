@@ -11,7 +11,7 @@ import (
 )
 
 func TestWorkflowGeneration(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 	expectedYamlBytes, _ := os.ReadFile("test_fixtures/valid_workflow.yaml")
 	expectedWorkflow := GitHubActionsWorkflow{}
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)
@@ -38,7 +38,7 @@ func TestWorkflowGenerationE2e(t *testing.T) {
 }
 
 func TestDeployTerraformApplication(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 
 	terraformApp := builder.Application("infra", "terraform/main", typeTerraform)
 	parsedConfig := SuccessfulParse(
@@ -80,7 +80,7 @@ func TestDeployTerraformApplication(t *testing.T) {
 }
 
 func TestDeployHelmApplication(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 
 	dbApp := PostgresHelmChart(builder)
 	parsedConfig := SuccessfulParse(
@@ -129,7 +129,7 @@ func TestDeployHelmApplication(t *testing.T) {
 }
 
 func TestBuildChangedApplicationArtifact(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 
 	clientArtifact := builder.Artifact("client", "pkgs/client")
 	parsedConfig := SuccessfulParse(
@@ -193,7 +193,7 @@ func TestBuildChangedApplicationArtifact(t *testing.T) {
 }
 
 func TestBuildUnchangedApplicationArtifact(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 
 	clientArtifact := builder.Artifact("client", "pkgs/client")
 	clientArtifact.hasChanged = false

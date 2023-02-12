@@ -72,9 +72,9 @@ type TestBuilder struct {
 	secretProviders SecretProviders
 }
 
-func NewTestBuilder(currentSha string) TestBuilder {
+func NewTestBuilder() TestBuilder {
 	return TestBuilder{
-		currentSha: currentSha,
+		currentSha: "currentSha",
 		artifactRepo: ArtifactRepository{
 			Host: "us-central1-docker.pkg.dev",
 			Name: "gcp-project/repo-name",

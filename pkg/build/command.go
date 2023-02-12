@@ -4,6 +4,12 @@ type SideEffects struct {
 	Commands []Command
 }
 
+func NewSideEffects(commands ...Command) SideEffects {
+	return SideEffects{
+		Commands: commands,
+	}
+}
+
 type Command struct {
 	Name      string
 	Arguments []string
@@ -14,6 +20,11 @@ func NewCommand(name string, args ...string) Command {
 		Name:      name,
 		Arguments: args,
 	}
+}
+
+func (c Command) Add(args ...string) Command {
+	c.Arguments = append(c.Arguments, args...)
+	return c
 }
 
 func (s SideEffects) Apply(r CommandRunner) error {

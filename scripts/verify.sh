@@ -9,10 +9,10 @@ go vet ./...
 go fmt ./...
 
 if [ "$INSPECT_COVERAGE" == "true" ]; then
-  go test ./... -coverprofile=coverage.out
+  go test ./... -coverprofile=coverage.out "$@"
   go tool cover -html=coverage.out
 else
-  go test  ./... -cover
+  go test  ./... -cover "$@"
 fi
 
 go run ./cmd/build generate pkg/build/example/workflow.yaml --config pkg/build/example/pipeline.yaml

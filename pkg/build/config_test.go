@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseConfig(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 
 	cases := []struct {
 		args     ActionArgs

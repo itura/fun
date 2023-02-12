@@ -13,66 +13,35 @@ func (b NullBuild) Build() (SideEffects, error) {
 	return SideEffects{}, fmt.Errorf("invalid build")
 }
 
-type PackageVerifier struct {
+type DockerImage struct {
 	Artifact
 	dockerfile string
 	workdir    string
-	buildArgs  []string
 }
 
-func NewPackageVerifier(a Artifact) PackageVerifier {
-	return PackageVerifier{
+func NewDockerImage(a Artifact) DockerImage {
+	return DockerImage{
 		Artifact:   a,
 		dockerfile: fmt.Sprintf("%s/Dockerfile", a.Path),
 		workdir:    a.Path,
 	}
 }
 
-func (b PackageVerifier) Build() (SideEffects, error) {
-	if b.hasChanged {
-		return SideEffects{Commands: []Command{
-			{
-				Name: "docker",
-				Arguments: []string{
-					"build",
-					"-f", b.dockerfile,
-					"-t", b.VerifyImageName(),
-					"--target", b.VerifyTarget(),
-					b.workdir,
-				},
-			},
-			{
-				Name:      "docker",
-				Arguments: []string{"run", "--rm", b.VerifyImageName()},
-			},
-		}}, nil
-
-	}
-
-	return SideEffects{}, nil
-}
-
-type DockerImage struct {
-	PackageVerifier
-}
-
-func NewDockerImage(a Artifact) DockerImage {
-	return DockerImage{
-		PackageVerifier: NewPackageVerifier(a),
-	}
-}
-
 func (b DockerImage) Build() (SideEffects, error) {
-	sideEffects, err := b.PackageVerifier.Build()
-	if err != nil {
-		return SideEffects{}, err
-	}
-
 	commitTag := b.AppImageName(b.CurrentSha)
 	greenTag := b.AppImageName(b.GreenTag())
 
 	if b.hasChanged {
-		sideEffects = sideEffects.Add(
+		return NewSideEffects(
+			// tests
+			NewCommand("docker", "build",
+				"-f", b.dockerfile,
+				"-t", b.VerifyImageName(),
+				"--target", b.VerifyTarget(),
+				b.workdir,
+			),
+			NewCommand("docker", "run", "--rm", b.VerifyImageName()),
+			//app
 			NewCommand("docker", "build",
 				"-f", b.dockerfile,
 				"-t", b.AppImageName(b.CurrentSha),
@@ -84,15 +53,14 @@ func (b DockerImage) Build() (SideEffects, error) {
 				"--all-tags",
 				b.AppImageBase(),
 			),
-		)
+		), nil
 	} else {
-		sideEffects = sideEffects.Add(
+		return NewSideEffects(
 			NewCommand("docker", "pull", greenTag),
 			NewCommand("docker", "tag", greenTag, commitTag),
 			NewCommand("docker", "push", commitTag),
-		)
+		), nil
 	}
-	return sideEffects, nil
 }
 
 type HelmDeployment struct {
@@ -106,34 +74,22 @@ func NewHelm(a Application) HelmDeployment {
 }
 
 func (b HelmDeployment) Build() (SideEffects, error) {
-	args := []string{
-		"upgrade", b.Id, b.Path,
+	deploy := NewCommand("helm", "upgrade", b.Id, b.Path,
 		"--install",
 		"--atomic",
 		"--namespace", b.Namespace,
 		"--set", fmt.Sprintf("repo=%s", b.Repository),
 		"--set", fmt.Sprintf("tag=%s", b.CurrentSha),
-	}
+	)
 
 	for _, arg := range b.RuntimeArgs {
-		args = append(args, "--set", fmt.Sprintf("%s=$%s", arg.Key, arg.EnvKey()))
+		deploy = deploy.Add("--set", fmt.Sprintf("%s=$%s", arg.Key, arg.EnvKey()))
 	}
 
-	return SideEffects{
-		Commands: []Command{
-			{
-				Name: "helm",
-				Arguments: []string{
-					"dep",
-					"update",
-				},
-			},
-			{
-				Name:      "helm",
-				Arguments: args,
-			},
-		},
-	}, nil
+	return NewSideEffects(
+		NewCommand("helm", "dep", "update"),
+		deploy,
+	), nil
 }
 
 type TfConfig struct {
@@ -147,31 +103,9 @@ func NewTerraform(a Application) TfConfig {
 }
 
 func (b TfConfig) Build() (SideEffects, error) {
-	return SideEffects{
-		Commands: []Command{
-			{
-				Name: "terraform",
-				Arguments: []string{
-					"-chdir=terraform/main",
-					"init",
-				},
-			},
-			{
-				Name: "terraform",
-				Arguments: []string{
-					"-chdir=terraform/main",
-					"plan",
-					"-out=plan.out",
-				},
-			},
-			{
-				Name: "terraform",
-				Arguments: []string{
-					"-chdir=terraform/main",
-					"apply",
-					"plan.out",
-				},
-			},
-		},
-	}, nil
+	return NewSideEffects(
+		NewCommand("terraform", "-chdir=terraform/main", "init"),
+		NewCommand("terraform", "-chdir=terraform/main", "plan", "-out=plan.out"),
+		NewCommand("terraform", "-chdir=terraform/main", "apply", "plan.out"),
+	), nil
 }

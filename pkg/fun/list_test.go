@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestTypes(t *testing.T) {
+func TestList(t *testing.T) {
 	suite.Run(t, new(ListSuite))
 }
 

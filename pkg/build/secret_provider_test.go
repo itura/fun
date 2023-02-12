@@ -7,7 +7,7 @@ import (
 )
 
 func TestGitHubResolveSecrets(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 	gitHubProvider := builder.secretProviders["github"].Impl("github")
 	gitHubProvider = gitHubProvider.Add("postgresql.auth.password", "pg-password")
 	gitHubProvider = gitHubProvider.Add("postgresql.auth.username", "pg-username")
@@ -23,7 +23,7 @@ func TestGitHubResolveSecrets(t *testing.T) {
 }
 
 func TestGcpResolveSecrets(t *testing.T) {
-	builder := NewTestBuilder("currentSha")
+	builder := NewTestBuilder()
 	gcpProvider := builder.secretProviders["gcp-project"].Impl("gcp-project")
 	gcpProvider = gcpProvider.Add("postgresql.auth.password", "pg-password")
 	gcpProvider = gcpProvider.Add("postgresql.auth.username", "pg-username")
