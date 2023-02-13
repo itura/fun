@@ -31,10 +31,12 @@ func TestWorkflowGenerationE2e(t *testing.T) {
 	err := yaml.Unmarshal(expectedYamlBytes, &expectedWorkflow)
 	assert.Nil(t, err)
 
-	pipeline, err := ParsePipeline(TestArgs("test_fixtures/valid_pipeline_config.yaml"), "prevSha")
+	pipeline, err := ParsePipeline(
+		TestArgs("test_fixtures/valid_pipeline_config.yaml"),
+		NewAlwaysChanged(),
+	)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedWorkflow, pipeline.ToGitHubWorkflow())
-
 }
 
 func TestDeployTerraformApplication(t *testing.T) {
@@ -46,7 +48,7 @@ func TestDeployTerraformApplication(t *testing.T) {
 		map[string]Artifact{},
 		map[string]Application{
 			"infra": terraformApp,
-		},
+		}, NewDependencies(),
 	)
 	pipeline := NewPipeline(parsedConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.19")
 
@@ -89,6 +91,7 @@ func TestDeployHelmApplication(t *testing.T) {
 		map[string]Application{
 			"db": dbApp,
 		},
+		NewDependencies(),
 	)
 	pipeline := NewPipeline(parsedConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.19")
 
@@ -138,6 +141,7 @@ func TestBuildChangedApplicationArtifact(t *testing.T) {
 			"client": clientArtifact,
 		},
 		map[string]Application{},
+		NewDependencies(),
 	)
 	pipeline := NewPipeline(parsedConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.19")
 
@@ -203,6 +207,7 @@ func TestBuildUnchangedApplicationArtifact(t *testing.T) {
 			"client": clientArtifact,
 		},
 		map[string]Application{},
+		NewDependencies(),
 	)
 	pipeline := NewPipeline(parsedConfig, "test_fixtures/valid_pipeline_config.yaml", "github.com/itura/fun/cmd/build@v0.1.19")
 

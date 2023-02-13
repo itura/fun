@@ -25,8 +25,8 @@ func NewPipeline(result PipelineConfig, configPath string, _cmd string) Pipeline
 	}
 }
 
-func ParsePipeline(args ActionArgs, previousSha string) (Pipeline, error) {
-	config := parseConfig(args, previousSha)
+func ParsePipeline(args ActionArgs, cd ChangeDetection) (Pipeline, error) {
+	config := parseConfig(args, cd)
 	if config.Error != nil {
 		return Pipeline{}, config.Error
 	}
@@ -70,11 +70,14 @@ func (p Pipeline) DeployApplication(id string) (SideEffects, error) {
 func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
 	jobs := map[string]GitHubActionsJob{}
 
+	dependencies := p.config.Dependencies
 	for id, artifact := range p.config.Artifacts {
-		jobs["build-"+id] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
+		jobId := dependencies.GetJobId(id)
+		jobs[jobId] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath, dependencies)
 	}
 	for id, app := range p.config.Applications {
-		jobs["deploy-"+id] = app.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
+		jobId := dependencies.GetJobId(id)
+		jobs[jobId] = app.ToGitHubActionsJob(p.Cmd, p.ConfigPath, dependencies)
 	}
 
 	workflow := GitHubActionsWorkflow{

@@ -1,5 +1,11 @@
 package build
 
+import (
+	"os"
+	"os/exec"
+	"strings"
+)
+
 type SideEffects struct {
 	Commands []Command
 }
@@ -47,14 +53,27 @@ func (s SideEffects) Add(commands ...Command) SideEffects {
 type CommandRunner interface {
 	Run(name string, args ...string) error
 	RunSilent(name string, args ...string) error
+	Output(name string, args ...string) (string, error)
 }
 
 type ShellCommandRunner struct{}
 
 func (c ShellCommandRunner) Run(name string, args ...string) error {
-	return command(name, args...)
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func (c ShellCommandRunner) RunSilent(name string, args ...string) error {
-	return commandSilent(name, args...)
+	cmd := exec.Command(name, args...)
+	_, err := cmd.Output()
+	return err
+}
+
+func (c ShellCommandRunner) Output(name string, args ...string) (string, error) {
+	cmd := exec.Command(name, args...)
+	raw, err := cmd.Output()
+	result := strings.TrimSpace(string(raw))
+	return result, err
 }

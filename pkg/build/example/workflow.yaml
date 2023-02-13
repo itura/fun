@@ -39,8 +39,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    needs:
-      - build-api
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3

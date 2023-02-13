@@ -5,13 +5,7 @@ import (
 	"strings"
 )
 
-func (a Application) ToGitHubActionsJob(cmd string, configPath string) GitHubActionsJob {
-	var needs []string
-
-	for _, job := range a.Upstreams {
-		needs = append(needs, job.JobId())
-	}
-
+func (a Application) ToGitHubActionsJob(cmd string, configPath string, dependencies Dependencies) GitHubActionsJob {
 	return GitHubActionsJob{
 		Name:   "Deploy " + a.Id,
 		RunsOn: "ubuntu-latest",
@@ -19,7 +13,7 @@ func (a Application) ToGitHubActionsJob(cmd string, configPath string) GitHubAct
 			"id-token": "write",
 			"contents": "read",
 		},
-		Needs: needs,
+		Needs: dependencies.GetUpstreamJobIds(a.Id),
 		Steps: a.GetSteps(cmd, configPath),
 	}
 }

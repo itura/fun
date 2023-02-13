@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func parseConfig(args ActionArgs, previousSha string) PipelineConfig {
+func parseConfig(args ActionArgs, cd ChangeDetection) PipelineConfig {
 	config, err := readFile(args.ConfigPath)
 	if err != nil {
 		return FailedParse("", err)
@@ -24,13 +24,14 @@ func parseConfig(args ActionArgs, previousSha string) PipelineConfig {
 		config.Resources.ArtifactRepository.Host,
 		config.Resources.ArtifactRepository.Name,
 	)
-	artifacts := CreateArtifacts(args, previousSha, config, artifactRepository)
-	applications, err := CreateApplications(args, previousSha, config, artifacts, artifactRepository)
+	dependencies := ParseDependencies(config)
+	artifacts := CreateArtifacts(args, cd, config, artifactRepository)
+	applications, err := CreateApplications(args, cd, config, artifactRepository, dependencies)
 	if err != nil {
 		return FailedParse(config.Name, err)
 	}
 
-	return SuccessfulParse(config.Name, artifacts, applications)
+	return SuccessfulParse(config.Name, artifacts, applications, dependencies)
 }
 
 func readFile(configPath string) (PipelineConfigRaw, error) {
@@ -52,10 +53,9 @@ type PipelineConfigRaw struct {
 	Name      string    `validate:"required"`
 	Resources Resources `validate:"required"`
 	Artifacts []struct {
-		Id           string
-		Path         string
-		Dependencies []string
-		Type         ArtifactType
+		Id   string
+		Path string
+		Type ArtifactType
 	}
 	Applications []struct {
 		Id           string

@@ -11,42 +11,23 @@ type Artifact struct {
 	Host            string
 	CurrentSha      string
 	Type            ArtifactType
-	Upstreams       []Job
 	hasDependencies bool
 	hasChanged      bool
 	CloudProvider   CloudProviderConfig
 }
 
-func CreateArtifacts(args ActionArgs, previousSha string, config PipelineConfigRaw, artifactRepository string) map[string]Artifact {
+func CreateArtifacts(args ActionArgs, cd ChangeDetection, config PipelineConfigRaw, artifactRepository string) map[string]Artifact {
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
-		var upstreams []Job
-		var cd ChangeDetection
-		if args.Force {
-			cd = NewAlwaysChanged()
-		} else {
-			_cd := NewGitChangeDetection(previousSha).
-				AddPaths(spec.Path)
-
-			// todo make agnostic to ordering
-			for _, id := range spec.Dependencies {
-				_cd = _cd.AddPaths(artifacts[id].Path)
-				upstreams = append(upstreams, artifacts[id])
-			}
-			cd = _cd
-		}
-
 		artifacts[spec.Id] = Artifact{
-			Type:            spec.Type,
-			Id:              spec.Id,
-			Path:            spec.Path,
-			Repository:      artifactRepository,
-			Host:            config.Resources.ArtifactRepository.Host,
-			CurrentSha:      args.CurrentSha,
-			hasDependencies: len(spec.Dependencies) > 0,
-			Upstreams:       upstreams,
-			hasChanged:      cd.HasChanged(),
-			CloudProvider:   config.Resources.CloudProvider,
+			Type:          spec.Type,
+			Id:            spec.Id,
+			Path:          spec.Path,
+			Repository:    artifactRepository,
+			Host:          config.Resources.ArtifactRepository.Host,
+			CurrentSha:    args.CurrentSha,
+			hasChanged:    cd.HasChanged(spec.Path),
+			CloudProvider: config.Resources.CloudProvider,
 		}
 	}
 	return artifacts
@@ -82,8 +63,4 @@ func (a Artifact) AppImageBase() string {
 
 func (a Artifact) AppImageName(tag string) string {
 	return fmt.Sprintf("%s:%s", a.AppImageBase(), tag)
-}
-
-func (a Artifact) HasDependencies() bool {
-	return a.hasDependencies
 }

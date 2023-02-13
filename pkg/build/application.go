@@ -28,39 +28,20 @@ type Application struct {
 	CurrentSha        string
 	Namespace         string
 	RuntimeArgs       []RuntimeArg
-	Upstreams         []Job
 	Type              ApplicationType
-	Secrets           map[string][]HelmSecretValue
-	SecretProviders   map[string]SecretProviderRaw
-	hasDependencies   bool
 	hasChanged        bool
-	CloudProvider     CloudProviderConfig
 	Steps             []GitHubActionsStep
 }
 
-func CreateApplications(args ActionArgs, previousSha string, config PipelineConfigRaw, artifacts map[string]Artifact, artifactRepository string) (map[string]Application, error) {
+func CreateApplications(
+	args ActionArgs,
+	cd ChangeDetection,
+	config PipelineConfigRaw,
+	artifactRepository string,
+	dependencies Dependencies,
+) (map[string]Application, error) {
 	applications := make(map[string]Application)
 	for _, spec := range config.Applications {
-		var upstreams []Job
-		var cd ChangeDetection
-		if args.Force {
-			cd = NewAlwaysChanged()
-		} else {
-			_cd := NewGitChangeDetection(previousSha).
-				AddPaths(spec.Path)
-
-			// todo make agnostic to ordering
-			for _, id := range spec.Artifacts {
-				_cd = _cd.AddPaths(artifacts[id].Path)
-				upstreams = append(upstreams, artifacts[id])
-			}
-			for _, id := range spec.Dependencies {
-				_cd = _cd.AddPaths(applications[id].Path)
-				upstreams = append(upstreams, applications[id])
-			}
-			cd = _cd
-		}
-
 		var runTimeArgs []RuntimeArg
 		for _, arg := range spec.Values {
 			runTimeArgs = append(runTimeArgs, RuntimeArg{
@@ -68,6 +49,7 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 				Value: arg.Value,
 			})
 		}
+
 		setupSteps := []GitHubActionsStep{
 			CheckoutRepoStep(),
 			SetupGoStep(),
@@ -76,8 +58,8 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 
 		numFound := 0
 		var secretProviders = config.Resources.SecretProviders
-		for e := range fun.MapEntriesOrdered(secretProviders) {
-			id, secretProviderConfig := e.Get()
+		for entry := range fun.MapEntriesOrdered(secretProviders) {
+			id, secretProviderConfig := entry.Get()
 			secretProvider := secretProviderConfig.Impl(id)
 			for _, secretConfig := range spec.Secrets {
 				if secretConfig.Provider == id {
@@ -93,7 +75,6 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 			return nil, MissingSecretProvider{}
 		}
 
-		hasDependencies := len(spec.Dependencies) > 0 || len(spec.Artifacts) > 0
 		applications[spec.Id] = Application{
 			Type:              spec.Type,
 			Id:                spec.Id,
@@ -102,11 +83,8 @@ func CreateApplications(args ActionArgs, previousSha string, config PipelineConf
 			CurrentSha:        args.CurrentSha,
 			Namespace:         spec.Namespace,
 			RuntimeArgs:       runTimeArgs,
-			Upstreams:         upstreams,
-			hasDependencies:   hasDependencies,
 			KubernetesCluster: config.Resources.KubernetesCluster,
-			hasChanged:        cd.HasChanged(),
-			CloudProvider:     config.Resources.CloudProvider,
+			hasChanged:        cd.HasChanged(dependencies.GetAllPaths(spec.Id)...),
 			Steps:             setupSteps,
 		}
 	}

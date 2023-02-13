@@ -12,3 +12,16 @@ func RandString(length int) string {
 	}
 	return string(b)
 }
+
+// https://stackoverflow.com/questions/66643946/how-to-remove-duplicates-strings-or-int-from-slice-in-go
+func RemoveDuplicate[T comparable](data []T) []T {
+	allKeys := make(map[T]bool)
+	var list []T
+	for _, item := range data {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+	return list
+}

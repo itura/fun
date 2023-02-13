@@ -17,7 +17,12 @@ type ActionArgs struct {
 }
 
 func (a ActionArgs) CreatePipeline() (Pipeline, error) {
-	return ParsePipeline(a, previousCommit())
+	runner := ShellCommandRunner{}
+	cd, err := NewGitChangeDetection(runner)
+	if err != nil {
+		return Pipeline{}, err
+	}
+	return ParsePipeline(a, cd)
 }
 
 type GenerateArgs struct {
@@ -26,12 +31,15 @@ type GenerateArgs struct {
 }
 
 func (g GenerateArgs) CreatePipeline() (Pipeline, error) {
-	return ParsePipeline(ActionArgs{
-		CommonArgs: g.CommonArgs,
-		Id:         "",
-		CurrentSha: "",
-		Force:      false,
-	}, "")
+	return ParsePipeline(
+		ActionArgs{
+			CommonArgs: g.CommonArgs,
+			Id:         "",
+			CurrentSha: "",
+			Force:      false,
+		},
+		NewAlwaysChanged(),
+	)
 }
 
 type GenerateCommand struct {

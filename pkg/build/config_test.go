@@ -46,7 +46,7 @@ func TestParseConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := parseConfig(tc.args, "previousSha")
+			result := parseConfig(tc.args, NewAlwaysChanged())
 			assert.Equal(t, tc.expected.BuildName, result.BuildName)
 			assert.Equal(t, tc.expected.Artifacts, result.Artifacts)
 			assert.Equal(t, tc.expected.Applications, result.Applications)

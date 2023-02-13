@@ -1,32 +1,8 @@
 package build
 
 import (
-	"os"
-	"os/exec"
-	"strings"
-
 	"github.com/itura/fun/pkg/fun"
 )
-
-func command(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func commandSilent(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	_, err := cmd.Output()
-	return err
-}
-
-func previousCommit() string {
-	revList := exec.Command("git", "rev-list", "-n", "1", "HEAD~1")
-	output, _ := revList.Output()
-	ref := strings.TrimSpace(string(output))
-	return ref
-}
 
 type Job interface {
 	JobId() string
@@ -35,6 +11,7 @@ type Job interface {
 type PipelineConfig struct {
 	Artifacts    fun.Config[Artifact]
 	Applications fun.Config[Application]
+	Dependencies Dependencies
 	BuildName    string
 	Error        error
 }
@@ -46,11 +23,12 @@ func NewParsedConfig() PipelineConfig {
 	}
 }
 
-func SuccessfulParse(name string, artifacts fun.Config[Artifact], applications fun.Config[Application]) PipelineConfig {
+func SuccessfulParse(name string, artifacts fun.Config[Artifact], applications fun.Config[Application], dependencies Dependencies) PipelineConfig {
 	return NewParsedConfig().
 		SetArtifacts(artifacts).
 		SetApplications(applications).
-		SetBuildName(name)
+		SetBuildName(name).
+		SetDependencies(dependencies)
 }
 
 func FailedParse(name string, err error) PipelineConfig {
@@ -59,38 +37,27 @@ func FailedParse(name string, err error) PipelineConfig {
 		SetError(err)
 }
 
-func (o PipelineConfig) ListArtifacts() []Artifact {
-	var artifacts []Artifact
-	for _, v := range o.Artifacts {
-		artifacts = append(artifacts, v)
-	}
-	return artifacts
+func (c PipelineConfig) SetArtifacts(artifacts fun.Config[Artifact]) PipelineConfig {
+	c.Artifacts = artifacts
+	return c
 }
 
-func (o PipelineConfig) ListApplications() []Application {
-	var applications []Application
-	for _, v := range o.Applications {
-		applications = append(applications, v)
-	}
-	return applications
+func (c PipelineConfig) SetApplications(applications fun.Config[Application]) PipelineConfig {
+	c.Applications = applications
+	return c
 }
 
-func (o PipelineConfig) SetArtifacts(artifacts fun.Config[Artifact]) PipelineConfig {
-	o.Artifacts = artifacts
-	return o
+func (c PipelineConfig) SetDependencies(deps Dependencies) PipelineConfig {
+	c.Dependencies = deps
+	return c
 }
 
-func (o PipelineConfig) SetApplications(applications fun.Config[Application]) PipelineConfig {
-	o.Applications = applications
-	return o
+func (c PipelineConfig) SetBuildName(name string) PipelineConfig {
+	c.BuildName = name
+	return c
 }
 
-func (o PipelineConfig) SetBuildName(name string) PipelineConfig {
-	o.BuildName = name
-	return o
-}
-
-func (o PipelineConfig) SetError(err error) PipelineConfig {
-	o.Error = err
-	return o
+func (c PipelineConfig) SetError(err error) PipelineConfig {
+	c.Error = err
+	return c
 }
