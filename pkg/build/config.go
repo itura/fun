@@ -55,7 +55,6 @@ type PipelineConfigRaw struct {
 	Artifacts []struct {
 		Id   string
 		Path string
-		Type ArtifactType
 	}
 	Applications []struct {
 		Id           string

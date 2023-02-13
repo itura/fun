@@ -26,7 +26,7 @@ func ValidPipelineConfig(builder TestBuilder) PipelineConfig {
 }
 
 func TerraformConfig(builder TestBuilder, id string, path string) Application {
-	app := builder.Application(id, path, typeTerraform).
+	app := builder.Application(id, path, applicationTypeTerraform).
 		AddStep(
 			CheckoutRepoStep(),
 			SetupGoStep(),
@@ -36,7 +36,7 @@ func TerraformConfig(builder TestBuilder, id string, path string) Application {
 }
 
 func PostgresHelmChart(builder TestBuilder, upstreams ...string) Application {
-	return builder.Application("db", "helm/db", typeHelm, upstreams...).
+	return builder.Application("db", "helm/db", applicationTypeHelm, upstreams...).
 		SetNamespace("db-namespace").
 		AddRuntimeArg("postgresql.dbName", "my-db").
 		AddRuntimeArg("postgresql.auth.password", "${{ steps.secrets-gcp-project.outputs.pg-password }}").
@@ -50,7 +50,7 @@ func PostgresHelmChart(builder TestBuilder, upstreams ...string) Application {
 }
 
 func WebsiteHelmChart(builder TestBuilder, upstreams ...string) Application {
-	return builder.Application("website", "helm/website", typeHelm, upstreams...).
+	return builder.Application("website", "helm/website", applicationTypeHelm, upstreams...).
 		SetNamespace("website-namespace").
 		AddRuntimeArg("app-name", "website").
 		AddRuntimeArg("client.secrets.clientId", "${{ steps.secrets-gcp-project.outputs.client-id }}").
@@ -107,7 +107,6 @@ func (b TestBuilder) Artifact(id string, path string) Artifact {
 		Repository:    b.repository(),
 		Host:          b.artifactRepo.Host,
 		CurrentSha:    b.currentSha,
-		Type:          "app",
 		hasChanged:    true,
 		CloudProvider: b.cloudProvider(),
 	}

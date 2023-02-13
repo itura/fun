@@ -93,9 +93,9 @@ func CreateApplications(
 
 func (a Application) PrepareBuild() Build {
 	switch a.Type {
-	case typeTerraform:
+	case applicationTypeTerraform:
 		return NewTerraform(a)
-	case typeHelm:
+	case applicationTypeHelm:
 		return NewHelm(a)
 	default:
 		return NullBuild{}

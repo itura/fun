@@ -10,7 +10,6 @@ type Artifact struct {
 	Repository      string
 	Host            string
 	CurrentSha      string
-	Type            ArtifactType
 	hasDependencies bool
 	hasChanged      bool
 	CloudProvider   CloudProviderConfig
@@ -20,7 +19,6 @@ func CreateArtifacts(args ActionArgs, cd ChangeDetection, config PipelineConfigR
 	artifacts := make(map[string]Artifact)
 	for _, spec := range config.Artifacts {
 		artifacts[spec.Id] = Artifact{
-			Type:          spec.Type,
 			Id:            spec.Id,
 			Path:          spec.Path,
 			Repository:    artifactRepository,

@@ -42,7 +42,7 @@ func TestWorkflowGenerationE2e(t *testing.T) {
 func TestDeployTerraformApplication(t *testing.T) {
 	builder := NewTestBuilder()
 
-	terraformApp := builder.Application("infra", "terraform/main", typeTerraform)
+	terraformApp := builder.Application("infra", "terraform/main", applicationTypeTerraform)
 	parsedConfig := SuccessfulParse(
 		"My Build",
 		map[string]Artifact{},

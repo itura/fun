@@ -19,9 +19,9 @@ func (a Application) ToGitHubActionsJob(cmd string, configPath string, dependenc
 }
 
 func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep {
-	if a.Type == typeHelm {
+	if a.Type == applicationTypeHelm {
 		a.Steps = append(a.Steps, GetHelmSteps(a.KubernetesCluster)...)
-	} else if a.Type == typeTerraform {
+	} else if a.Type == applicationTypeTerraform {
 		a.Steps = append(a.Steps, GetTerraformSteps()...)
 	}
 

@@ -5,21 +5,24 @@ import (
 	"strings"
 )
 
-type ArtifactType string
+type ApplicationType uint
 
-var (
-	typeLibGo ArtifactType = "lib-go"
-	typeAppGo ArtifactType = "app-go"
-	typeApp   ArtifactType = "app"
-	typeLib   ArtifactType = "lib"
+const (
+	applicationTypeNil ApplicationType = iota
+	applicationTypeHelm
+	applicationTypeTerraform
 )
 
-type ApplicationType string
+var ApplicationTypeEnum = NewEnum[ApplicationType](map[ApplicationType]string{
+	applicationTypeHelm:      "helm",
+	applicationTypeTerraform: "terraform",
+})
 
-var (
-	typeHelm      ApplicationType = "helm"
-	typeTerraform ApplicationType = "terraform"
-)
+func (s *ApplicationType) UnmarshalYAML(
+	unmarshal func(interface{}) error,
+) error {
+	return ApplicationTypeEnum.Unmarshal(unmarshal, s)
+}
 
 type CloudProviderType uint
 
