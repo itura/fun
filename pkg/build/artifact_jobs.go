@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (a Artifact) ToGitHubActionsJob(cmd string, configPath string, dependencies Dependencies) GitHubActionsJob {
+func (a Artifact) ToGitHubActionsJob(cmd string, configPath string) GitHubActionsJob {
 	return GitHubActionsJob{
 		Name:   "Build " + a.Id,
 		RunsOn: "ubuntu-latest",
@@ -18,6 +18,7 @@ func (a Artifact) ToGitHubActionsJob(cmd string, configPath string, dependencies
 }
 
 func (a Artifact) GetSteps(cmd string, configPath string) []GitHubActionsStep {
+	// TODO consolidate setup steps
 	checkoutStep := GitHubActionsStep{
 		Name: "Checkout Repo",
 		Uses: "actions/checkout@v3",

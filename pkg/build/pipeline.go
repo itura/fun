@@ -73,7 +73,7 @@ func (p Pipeline) ToGitHubWorkflow() GitHubActionsWorkflow {
 	dependencies := p.config.Dependencies
 	for id, artifact := range p.config.Artifacts {
 		jobId := dependencies.GetJobId(id)
-		jobs[jobId] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath, dependencies)
+		jobs[jobId] = artifact.ToGitHubActionsJob(p.Cmd, p.ConfigPath)
 	}
 	for id, app := range p.config.Applications {
 		jobId := dependencies.GetJobId(id)

@@ -64,6 +64,7 @@ func ParseDependencies(config PipelineConfigRaw) Dependencies {
 		}
 		d.deps[application.Id] = dep
 	}
+	// TODO add validations
 	return d
 }
 

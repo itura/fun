@@ -5,14 +5,13 @@ import (
 )
 
 type Artifact struct {
-	Id              string
-	Path            string
-	Repository      string
-	Host            string
-	CurrentSha      string
-	hasDependencies bool
-	hasChanged      bool
-	CloudProvider   CloudProviderConfig
+	Id            string
+	Path          string
+	Repository    string
+	Host          string
+	CurrentSha    string
+	hasChanged    bool
+	CloudProvider CloudProviderConfig
 }
 
 func CreateArtifacts(args ActionArgs, cd ChangeDetection, config PipelineConfigRaw, artifactRepository string) map[string]Artifact {

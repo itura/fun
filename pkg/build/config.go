@@ -73,10 +73,11 @@ func (p PipelineConfigRaw) Validate(key string) ValidationErrors {
 }
 
 type Resources struct {
-	ArtifactRepository ArtifactRepository  `yaml:"artifactRepository" validate:"required"`
-	KubernetesCluster  ClusterConfig       `yaml:"kubernetesCluster"  validate:"required"`
-	SecretProviders    SecretProviders     `yaml:"secretProviders"    validate:"required"`
-	CloudProvider      CloudProviderConfig `yaml:"cloudProvider"      validate:"required"`
+	ArtifactRepository ArtifactRepository `yaml:"artifactRepository" validate:"required"`
+	KubernetesCluster  ClusterConfig      `yaml:"kubernetesCluster"  validate:"required"`
+	// TODO convert to list
+	SecretProviders SecretProviders     `yaml:"secretProviders"    validate:"required"`
+	CloudProvider   CloudProviderConfig `yaml:"cloudProvider"      validate:"required"`
 }
 
 func (r Resources) Validate(key string) ValidationErrors {

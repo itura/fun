@@ -15,11 +15,6 @@ func (r RuntimeArg) EnvKey() string {
 	return strings.ReplaceAll(r.Key, ".", "_")
 }
 
-type HelmSecretValue struct {
-	HelmKey    string
-	SecretName string
-}
-
 type Application struct {
 	Id                string
 	Path              string
