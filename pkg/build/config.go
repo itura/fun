@@ -3,6 +3,7 @@ package build
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/itura/fun/pkg/fun"
 	"gopkg.in/yaml.v3"
@@ -73,11 +74,10 @@ func (p PipelineConfigRaw) Validate(key string) ValidationErrors {
 }
 
 type Resources struct {
-	ArtifactRepository ArtifactRepository `yaml:"artifactRepository" validate:"required"`
-	KubernetesCluster  ClusterConfig      `yaml:"kubernetesCluster"  validate:"required"`
-	// TODO convert to list
-	SecretProviders SecretProviders     `yaml:"secretProviders"    validate:"required"`
-	CloudProvider   CloudProviderConfig `yaml:"cloudProvider"      validate:"required"`
+	ArtifactRepository ArtifactRepository    `yaml:"artifactRepository" validate:"required"`
+	KubernetesCluster  ClusterConfig         `yaml:"kubernetesCluster"  validate:"required"`
+	SecretProviders    SecretProviderConfigs `yaml:"secretProviders"    validate:"required"`
+	CloudProvider      CloudProviderConfig   `yaml:"cloudProvider"      validate:"required"`
 }
 
 func (r Resources) Validate(key string) ValidationErrors {
@@ -124,6 +124,35 @@ func (c CloudProviderConfig) Validate(key string) ValidationErrors {
 type SecretProviderRaw struct {
 	Type   SecretProviderType `validate:"required"`
 	Config map[string]string
+}
+
+type SecretProviderConfig struct {
+	Id     string             `validate:"required"`
+	Type   SecretProviderType `validate:"required"`
+	Config map[string]string
+}
+
+func (s SecretProviderConfig) Impl() SecretProvider {
+	switch s.Type {
+	case secretProviderTypeGithub:
+		return GitHubActionsSecretProvider{}
+	case secretProviderTypeGcp:
+		return GcpSecretProvider{
+			project: s.Config["project"],
+			id:      s.Id,
+		}
+	}
+	return nil
+}
+
+type SecretProviderConfigs []SecretProviderConfig
+
+func (s SecretProviderConfigs) Validate(key string) ValidationErrors {
+	errs := NewValidationErrors(key)
+	for i, provider := range s {
+		errs = errs.PutChild(NewValidationErrors(strconv.Itoa(i)).Validate(provider))
+	}
+	return errs
 }
 
 func (s SecretProviderRaw) Impl(id string) SecretProvider {

@@ -8,12 +8,12 @@ resources:
     name: cluster-name
     location: uscentral1
   secretProviders:
-    github:
-      type: github-actions
-    gcp-project:
-      type: gcp
+    - type: gcp
+      id: gcp-project
       config:
         project: gcp-project
+    - type: github-actions
+      id: github
   cloudProvider:
     type: gcp
     config:

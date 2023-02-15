@@ -120,12 +120,14 @@ func TestSecretProvidersValidation(t *testing.T) {
 
 func TestResourcesValidation(t *testing.T) {
 	resources := Resources{
-		SecretProviders: SecretProviders{
-			"one": SecretProviderRaw{
+		SecretProviders: SecretProviderConfigs{
+			SecretProviderConfig{
+				Id:     "github",
 				Type:   secretProviderTypeGithub,
 				Config: nil,
 			},
-			"two": SecretProviderRaw{
+			SecretProviderConfig{
+				Id:   "gcp-cool-proj",
 				Type: secretProviderTypeGcp,
 				Config: fun.Config[string]{
 					"project": "cool-proj",
@@ -152,14 +154,15 @@ func TestResourcesValidation(t *testing.T) {
 	assert.Equal(t, false, errs.IsPresent())
 
 	resources = Resources{
-		SecretProviders: SecretProviders{
-			"two": SecretProviderRaw{
+		SecretProviders: SecretProviderConfigs{
+			SecretProviderConfig{
+				Id:   "gcp-cool-proj",
 				Type: secretProviderTypeGcp,
 				Config: fun.Config[string]{
 					"project": "cool-proj",
 				},
 			},
-			"four": SecretProviderRaw{},
+			SecretProviderConfig{},
 		},
 		CloudProvider: CloudProviderConfig{
 			Type: cloudProviderTypeGcp,
