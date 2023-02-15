@@ -34,8 +34,20 @@ func CreateApplications(
 	artifactRepository string,
 	dependencies Dependencies,
 ) (map[string]Application, error) {
+
+	secretProviders := NewSecretProviders1(config.Resources.SecretProviders)
 	applications := make(map[string]Application)
+	allValidationErrors := NewValidationErrors("applications")
+
 	for _, spec := range config.Applications {
+
+		applicationConfigErrors := NewValidationErrors(spec.Id)
+		applicationConfigErrors = secretProviders.Validate(applicationConfigErrors, spec.Secrets)
+		if applicationConfigErrors.IsPresent() {
+			allValidationErrors = allValidationErrors.PutChild(applicationConfigErrors)
+			continue
+		}
+
 		var runTimeArgs []RuntimeArg
 		for _, arg := range spec.Values {
 			runTimeArgs = append(runTimeArgs, RuntimeArg{
@@ -50,23 +62,8 @@ func CreateApplications(
 			config.Resources.CloudProvider.Impl().AuthStep(),
 		}
 
-		numFound := 0
-		var secretProviders = config.Resources.SecretProviders
-		for _, secretProviderConfig := range secretProviders {
-			secretProvider := secretProviderConfig.Impl()
-			for _, secretConfig := range spec.Secrets {
-				if secretConfig.Provider == secretProviderConfig.Id {
-					numFound++
-					secretProvider = secretProvider.Add(secretConfig.HelmKey, secretConfig.SecretName)
-				}
-			}
-			runTimeArgs = append(runTimeArgs, secretProvider.GetRuntimeArgs()...)
-			setupSteps = append(setupSteps, secretProvider.GenerateFetchSteps()...)
-		}
-
-		if numFound != len(spec.Secrets) {
-			return nil, MissingSecretProvider{}
-		}
+		runTimeArgs = append(runTimeArgs, secretProviders.ResolveRuntimeArgs(spec.Secrets)...)
+		setupSteps = append(setupSteps, secretProviders.ResolveSetupSteps(spec.Secrets)...)
 
 		applications[spec.Id] = Application{
 			Type:              spec.Type,
@@ -80,6 +77,10 @@ func CreateApplications(
 			hasChanged:        cd.HasChanged(dependencies.GetAllPaths(spec.Id)...),
 			Steps:             setupSteps,
 		}
+	}
+
+	if allValidationErrors.IsPresent() {
+		return map[string]Application{}, allValidationErrors
 	}
 	return applications, nil
 }

@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/itura/fun/pkg/fun"
 	"gopkg.in/yaml.v3"
 )
 
@@ -121,25 +120,24 @@ func (c CloudProviderConfig) Validate(key string) ValidationErrors {
 		PutChild(c.Impl().Validate("config"))
 }
 
-type SecretProviderRaw struct {
-	Type   SecretProviderType `validate:"required"`
-	Config map[string]string
-}
-
 type SecretProviderConfig struct {
-	Id     string             `validate:"required"`
-	Type   SecretProviderType `validate:"required"`
-	Config map[string]string
+	Id          string             `validate:"required"`
+	Type        SecretProviderType `validate:"required"`
+	SecretNames []string           `validate:"required" yaml:"secretNames"`
+	Config      map[string]string
 }
 
 func (s SecretProviderConfig) Impl() SecretProvider {
 	switch s.Type {
 	case secretProviderTypeGithub:
-		return GitHubActionsSecretProvider{}
+		return GitHubActionsSecretProvider{
+			secretNames: s.SecretNames,
+		}
 	case secretProviderTypeGcp:
 		return GcpSecretProvider{
-			project: s.Config["project"],
-			id:      s.Id,
+			secretNames: s.SecretNames,
+			config:      s.Config,
+			id:          s.Id,
 		}
 	}
 	return nil
@@ -150,40 +148,18 @@ type SecretProviderConfigs []SecretProviderConfig
 func (s SecretProviderConfigs) Validate(key string) ValidationErrors {
 	errs := NewValidationErrors(key)
 	for i, provider := range s {
-		errs = errs.PutChild(NewValidationErrors(strconv.Itoa(i)).Validate(provider))
+		providerErrs := NewValidationErrors(strconv.Itoa(i))
+		providerErrs = providerErrs.Validate(provider)
+		impl := provider.Impl()
+		if impl != nil {
+			providerErrs = impl.Validate(providerErrs)
+		}
+		errs = errs.PutChild(providerErrs)
 	}
 	return errs
-}
-
-func (s SecretProviderRaw) Impl(id string) SecretProvider {
-	switch s.Type {
-	case secretProviderTypeGithub:
-		return GitHubActionsSecretProvider{}
-	case secretProviderTypeGcp:
-		return GcpSecretProvider{
-			project: s.Config["project"],
-			id:      id,
-		}
-	}
-	return nil
 }
 
 type SecretConfig struct {
-	HelmKey    string "yaml:\"helmKey\""
+	Key        string
 	SecretName string "yaml:\"secretName\""
-	Provider   string
-}
-
-func (s SecretProviderRaw) Validate(key string) ValidationErrors {
-	return NewValidationErrors(key).ValidateTags(s)
-}
-
-type SecretProviders fun.Config[SecretProviderRaw]
-
-func (s SecretProviders) Validate(key string) ValidationErrors {
-	errs := NewValidationErrors(key)
-	for k, provider := range s {
-		errs = errs.PutChild(NewValidationErrors(k).Validate(provider))
-	}
-	return errs
 }

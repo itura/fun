@@ -10,7 +10,6 @@ import (
 
 func TestParseConfig(t *testing.T) {
 	builder := NewTestBuilder()
-
 	cases := []struct {
 		args     ActionArgs
 		name     string
@@ -22,13 +21,44 @@ func TestParseConfig(t *testing.T) {
 			expected: ValidPipelineConfig(builder),
 		},
 		{
-			name:     "MissingSecretProvider",
-			args:     TestArgs("test_fixtures/missing_secret_provider.yaml"),
-			expected: FailedParse("My Build", MissingSecretProvider{}),
+			name: "InvalidSecretName",
+			args: TestArgs("test_fixtures/invalid_secret_name.yaml"),
+			expected: FailedParse("My Build", NewValidationErrors("applications").
+				PutChild(NewValidationErrors("db").
+					PutChild(NewValidationErrors("secrets").
+						Put("postgresql.auth.postgresPassword", fmt.Errorf("secret 'beepboop' not configured in any secretProvider")),
+					),
+				),
+			),
+		}, {
+			name: "InvalidSecretProvider",
+			args: TestArgs("test_fixtures/invalid_secret_provider.yaml"),
+			expected: FailedParse("My Build", NewValidationErrors("").
+				PutChild(NewValidationErrors("resources").
+					PutChild(NewValidationErrors("secretProviders").
+						PutChild(NewValidationErrors("0").
+							Put("id", eMissingRequiredField).
+							Put("secretNames", eMissingRequiredField),
+						).
+						PutChild(NewValidationErrors("1").
+							Put("secretNames", eMissingRequiredField).
+							PutChild(NewValidationErrors("config").
+								Put("project", eMissingRequiredField)),
+						).
+						PutChild(NewValidationErrors("2").
+							Put("type", eMissingRequiredField),
+						).
+						PutChild(NewValidationErrors("3").
+							Put("secretNames", eMissingRequiredField).
+							Put("config", eMissingRequiredField),
+						),
+					),
+				),
+			),
 		},
 		{
 			name:     "InvalidSecretProviderType",
-			args:     TestArgs("test_fixtures/invalid_secret_provider.yaml"),
+			args:     TestArgs("test_fixtures/invalid_secret_provider_type.yaml"),
 			expected: FailedParse("", SecretProviderTypeEnum.InvalidEnumValue("aws")),
 		},
 		{
@@ -50,6 +80,7 @@ func TestParseConfig(t *testing.T) {
 			assert.Equal(t, tc.expected.BuildName, result.BuildName)
 			assert.Equal(t, tc.expected.Artifacts, result.Artifacts)
 			assert.Equal(t, tc.expected.Applications, result.Applications)
+			fmt.Println(result.Error)
 			assert.Equal(t, tc.expected.Error, result.Error)
 		})
 	}
@@ -100,24 +131,6 @@ func TestCloudProviderValidations(t *testing.T) {
 	)
 }
 
-func TestSecretProvidersValidation(t *testing.T) {
-	sp := SecretProviders{
-		"one": SecretProviderRaw{
-			Type:   secretProviderTypeGithub,
-			Config: nil,
-		},
-		"two": SecretProviderRaw{
-			Type: secretProviderTypeGcp,
-			Config: fun.Config[string]{
-				"project": "cool-proj",
-			},
-		},
-	}
-
-	errs := sp.Validate("secretProviders")
-	assert.Equal(t, false, errs.IsPresent())
-}
-
 func TestResourcesValidation(t *testing.T) {
 	resources := Resources{
 		SecretProviders: SecretProviderConfigs{
@@ -125,12 +138,18 @@ func TestResourcesValidation(t *testing.T) {
 				Id:     "github",
 				Type:   secretProviderTypeGithub,
 				Config: nil,
+				SecretNames: []string{
+					"yeehaw",
+				},
 			},
 			SecretProviderConfig{
 				Id:   "gcp-cool-proj",
 				Type: secretProviderTypeGcp,
 				Config: fun.Config[string]{
 					"project": "cool-proj",
+				},
+				SecretNames: []string{
+					"hoowee",
 				},
 			},
 		},

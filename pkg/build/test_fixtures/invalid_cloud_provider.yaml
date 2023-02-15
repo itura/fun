@@ -9,8 +9,16 @@ resources:
       id: gcp-project
       config:
         project: gcp-project
+      secretNames:
+        - pg-password
+        - client-id
+        - client-secret
+        - next-auth-url
+        - next-auth-secret
     - type: github-actions
       id: github
+      secretNames:
+        - pg-username
 artifacts:
   - id: api
     path: packages/api
@@ -33,10 +41,10 @@ applications:
       - key: postgresql.dbName
         value: my-db
     secrets:
-      - helmKey: postgresql.auth.password
+      - key: postgresql.auth.password
         secretName: pg-password
         provider: gcp-project
-      - helmKey: postgresql.auth.username
+      - key: postgresql.auth.username
         secretName: pg-username
         provider: github
 #  - id: app
@@ -53,15 +61,15 @@ applications:
 #      - key: app-name
 #        value: my-app
 #    secrets:
-#      - helmKey: client.secrets.clientId
+#      - key: client.secrets.clientId
 #        secretName: client-id
 #        provider: gcp-project
-#      - helmKey: client.secrets.clientSecret
+#      - key: client.secrets.clientSecret
 #        secretName: client-secret
 #        provider: gcp-project
-#      - helmKey: client.secrets.nextAuthUrl
+#      - key: client.secrets.nextAuthUrl
 #        secretName: next-auth-url
 #        provider: gcp-project
-#      - helmKey: client.secrets.nextAuthSecret
+#      - key: client.secrets.nextAuthSecret
 #        secretName: next-auth-secret
 #        provider: gcp-project

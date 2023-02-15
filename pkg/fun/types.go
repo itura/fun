@@ -134,3 +134,12 @@ func (h *Heap[T]) Pop() any {
 	*h = old[0 : n-1]
 	return x
 }
+
+func Contains[T comparable](data []T, element T) bool {
+	for _, a := range data {
+		if a == element {
+			return true
+		}
+	}
+	return false
+}

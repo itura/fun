@@ -138,6 +138,11 @@ jobs:
         with:
           service_account: ${{ secrets.BUILD_AGENT_SA }}
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+      - id: secrets-gcp-project
+        name: Get Secrets from GCP Provider gcp-project
+        uses: google-github-actions/get-secretmanager-secrets@v1
+        with:
+          secrets: ""
       - name: Authenticate to GKE Cluster
         uses: google-github-actions/get-gke-credentials@v1
         with:

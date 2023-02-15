@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/itura/fun/pkg/fun"
 )
 
 func ValidPipelineConfig(builder TestBuilder) PipelineConfig {
@@ -55,8 +56,8 @@ func WebsiteHelmChart(builder TestBuilder, upstreams ...string) Application {
 		AddRuntimeArg("app-name", "website").
 		AddRuntimeArg("client.secrets.clientId", "${{ steps.secrets-gcp-project.outputs.client-id }}").
 		AddRuntimeArg("client.secrets.clientSecret", "${{ steps.secrets-gcp-project.outputs.client-secret }}").
-		AddRuntimeArg("client.secrets.nextAuthSecret", "${{ steps.secrets-gcp-project.outputs.next-auth-secret }}").
 		AddRuntimeArg("client.secrets.nextAuthUrl", "${{ steps.secrets-gcp-project.outputs.next-auth-url }}").
+		AddRuntimeArg("client.secrets.nextAuthSecret", "${{ steps.secrets-gcp-project.outputs.next-auth-secret }}").
 		AddStep(
 			CheckoutRepoStep(),
 			SetupGoStep(),
@@ -70,7 +71,7 @@ type TestBuilder struct {
 	currentSha      string
 	clusterConfig   ClusterConfig
 	artifactRepo    ArtifactRepository
-	secretProviders SecretProviders
+	secretProviders SecretProviderConfigs
 	deps            Dependencies
 }
 
@@ -81,14 +82,18 @@ func NewTestBuilder() TestBuilder {
 			Host: "us-central1-docker.pkg.dev",
 			Name: "gcp-project/repo-name",
 		},
-		secretProviders: SecretProviders{
-			"gcp-project": {
-				Type:   secretProviderTypeGcp,
-				Config: map[string]string{"project": "gcp-project"},
-			},
-			"github": {
+		secretProviders: SecretProviderConfigs{
+			SecretProviderConfig{
+				Id:     "github",
 				Type:   secretProviderTypeGithub,
 				Config: nil,
+			},
+			SecretProviderConfig{
+				Id:   "gcp-project",
+				Type: secretProviderTypeGcp,
+				Config: fun.Config[string]{
+					"project": "gcp-project",
+				},
 			},
 		},
 		clusterConfig: ClusterConfig{
