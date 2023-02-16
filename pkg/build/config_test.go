@@ -86,6 +86,13 @@ func TestParseConfig(t *testing.T) {
 	}
 }
 
+func TestGithubActionsGeneration(t *testing.T) {
+	result, err := ParseConfigForGeneration("test_fixtures/valid_pipeline_config.yaml", "???")
+	assert.Nil(t, err)
+	//assert.Equal(t, "yeehaw", result)
+	_ = result.WriteYaml("test_fixtures/yeehaw.yaml")
+}
+
 func TestCloudProviderValidations(t *testing.T) {
 	cp := CloudProviderConfig{
 		Type: cloudProviderTypeGcp,

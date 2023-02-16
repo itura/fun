@@ -99,6 +99,7 @@ func NewTestBuilder() TestBuilder {
 		clusterConfig: ClusterConfig{
 			Name:     "cluster-name",
 			Location: "uscentral1",
+			Type:     "gke",
 		},
 		deps: NewDependencies(),
 	}

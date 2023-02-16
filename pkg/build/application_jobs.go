@@ -18,6 +18,19 @@ func (a Application) ToGitHubActionsJob(cmd string, configPath string, dependenc
 	}
 }
 
+func GetGitHubActionsJob(id string, steps []GitHubActionsStep, dependencies Dependencies) GitHubActionsJob {
+	return GitHubActionsJob{
+		Name:   "Deploy " + id,
+		RunsOn: "ubuntu-latest",
+		Permissions: map[string]string{
+			"id-token": "write",
+			"contents": "read",
+		},
+		Needs: dependencies.GetUpstreamJobIds(id),
+		Steps: steps,
+	}
+}
+
 func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep {
 	if a.Type == applicationTypeHelm {
 		a.Steps = append(a.Steps, GetHelmSteps(a.KubernetesCluster)...)
@@ -30,6 +43,27 @@ func (a Application) GetSteps(cmd string, configPath string) []GitHubActionsStep
 	a.Steps = append(a.Steps, deployStep)
 
 	return a.Steps
+}
+
+func GetSetupGkeStep(cluster ClusterConfig) GitHubActionsStep {
+	return GitHubActionsStep{
+		Name: "Authenticate to GKE Cluster",
+		Uses: "google-github-actions/get-gke-credentials@v1",
+		With: map[string]interface{}{
+			"cluster_name": cluster.Name,
+			"location":     cluster.Location,
+		},
+	}
+}
+
+func GetSetupHelmStep() GitHubActionsStep {
+	return GitHubActionsStep{
+		Name: "Setup Helm",
+		Uses: "azure/setup-helm@v3",
+		With: map[string]interface{}{
+			"version": "v3.10.2",
+		},
+	}
 }
 
 func GetHelmSteps(cluster ClusterConfig) []GitHubActionsStep {
@@ -64,6 +98,16 @@ func GetTerraformSteps() []GitHubActionsStep {
 			With: map[string]interface{}{
 				"terraform_version": "1.3.6",
 			},
+		},
+	}
+}
+
+func GetSetupTerraformStep() GitHubActionsStep {
+	return GitHubActionsStep{
+		Name: "Setup Terraform",
+		Uses: "hashicorp/setup-terraform@v2",
+		With: map[string]interface{}{
+			"terraform_version": "1.3.6",
 		},
 	}
 }

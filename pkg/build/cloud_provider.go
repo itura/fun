@@ -30,3 +30,24 @@ func (g GCP) Validate(key string) ValidationErrors {
 	}
 	return errs
 }
+
+type GCPCloudProvider struct {
+	Config map[string]string
+}
+
+func (g GCPCloudProvider) ResolveSetupSteps(secretConfigs []SecretConfig) []GitHubActionsStep {
+	return []GitHubActionsStep{GcpAuthStep(
+		formatSecretValue(g.Config["workloadIdentityProvider"]),
+		formatSecretValue(g.Config["serviceAccount"]),
+	)}
+}
+
+func (g GCPCloudProvider) Validate(errs ValidationErrors) ValidationErrors {
+	//if _, ok := g.Config["serviceAccount"]; !ok {
+	//	errs = errs.Put("serviceAccount", CloudProviderMissingField(g.Type()))
+	//}
+	//if _, ok := g.Config["workloadIdentityProvider"]; !ok {
+	//	errs = errs.Put("workloadIdentityProvider", CloudProviderMissingField(g.Type()))
+	//}
+	return errs
+}

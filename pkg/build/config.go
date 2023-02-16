@@ -56,16 +56,18 @@ type PipelineConfigRaw struct {
 		Id   string
 		Path string
 	}
-	Applications []struct {
-		Id           string
-		Path         string
-		Namespace    string
-		Artifacts    []string
-		Values       []RuntimeArg
-		Secrets      []SecretConfig
-		Dependencies []string
-		Type         ApplicationType
-	}
+	Applications []ApplicationConfig
+}
+
+type ApplicationConfig struct {
+	Id           string
+	Path         string
+	Namespace    string
+	Artifacts    []string
+	Values       []RuntimeArg
+	Secrets      []SecretConfig
+	Dependencies []string
+	Type         ApplicationType
 }
 
 func (p PipelineConfigRaw) Validate(key string) ValidationErrors {
@@ -86,6 +88,7 @@ func (r Resources) Validate(key string) ValidationErrors {
 type ClusterConfig struct {
 	Name     string `validate:"required"`
 	Location string `validate:"required"`
+	Type     string
 }
 
 func (c ClusterConfig) Validate(key string) ValidationErrors {

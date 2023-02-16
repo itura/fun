@@ -1,25 +1,35 @@
 package build
 
-type SecretProvider1 interface {
-	Add(key string, secretName string) SecretProvider
-	GetValue(id string) string
-	GetSetupSteps() []GitHubActionsStep
+type StepProvider[StepDto any] interface {
+	ResolveSetupSteps(secretConfigs []SecretConfig) []StepDto
+	Validate(ValidationErrors) ValidationErrors
+}
+
+type SecretProvider1[StepDto any] interface {
+	ResolveSetupSteps(secretConfigs []SecretConfig) []StepDto
+	Validate(ValidationErrors) ValidationErrors
 }
 
 type CloudProvider1[StepDto any] interface {
-	GetSetupSteps() []StepDto
-	Validate(key string) ValidationErrors
+	ResolveSetupSteps(secretConfigs []SecretConfig) []StepDto
+	Validate(ValidationErrors) ValidationErrors
 }
 
 type ArtifactRepositoryProvider[StepDto any] interface {
-	GetSetupSteps() []StepDto
-	Validate(key string) ValidationErrors
+	ResolveSetupSteps(secretConfigs []SecretConfig) []StepDto
+	Validate(ValidationErrors) ValidationErrors
+}
+
+type KubernetesProvider[StepDto any] interface {
+	ResolveSetupSteps(secretConfigs []SecretConfig) []StepDto
+	Validate(ValidationErrors) ValidationErrors
 }
 
 type ProviderFactory[StepDto any] interface {
-	GetCloudProvider(t CloudProviderType) CloudProvider1[StepDto]
+	GetCloudProvider() CloudProvider1[StepDto]
+	GetSecretProvider(t SecretProviderType) SecretProvider1[StepDto]
 	GetArtifactRepositoryProvider(t string) ArtifactRepositoryProvider[StepDto]
-	GetSecretProviders(t SecretProviderType) []SecretProvider1
+	GetKubernetesProvider(t string) KubernetesProvider[StepDto]
 }
 
 func parseConfig1(args ActionArgs, cd ChangeDetection) {
@@ -35,9 +45,9 @@ func parseConfig1(args ActionArgs, cd ChangeDetection) {
 	//buildType := "github"
 
 	//if buildType == "github" {
-	//	factory := GithubActionsProviderFactory{config: config}
+	//	factory := GithubActionsFactory{config: config}
 	//
-	//	cloudProvider := factory.GetCloudProvider(config.Resources.CloudProvider.Type)
+	//	cloudProvider := factory.GetCloudProviderSteps(config.Resources.CloudProvider.Type)
 	//	artifactRepositoryProvider := factory.GetArtifactRepositoryProvider()
 	//
 	//	setupSteps := append(
@@ -47,7 +57,7 @@ func parseConfig1(args ActionArgs, cd ChangeDetection) {
 	//
 	//} else if buildType == "circleCi" {
 	//	factory := CircleCiProviderFactory{config: config}
-	//	cloudProvider := factory.GetCloudProvider(config.Resources.CloudProvider.Type)
+	//	cloudProvider := factory.GetCloudProviderSteps(config.Resources.CloudProvider.Type)
 	//
 	//	blah := cloudProvider.GetSetupSteps()
 	//}

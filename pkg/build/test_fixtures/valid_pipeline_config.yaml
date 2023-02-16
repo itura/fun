@@ -7,6 +7,7 @@ resources:
   kubernetesCluster:
     name: cluster-name
     location: uscentral1
+    type: gke
   secretProviders:
     - type: gcp
       id: gcp-project
