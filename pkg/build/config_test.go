@@ -87,10 +87,102 @@ func TestParseConfig(t *testing.T) {
 }
 
 func TestGithubActionsGeneration(t *testing.T) {
-	result, err := ParseConfigForGeneration("test_fixtures/valid_pipeline_config.yaml", "???")
+	result, err := ReadConfigForGeneration("test_fixtures/valid_pipeline_config.yaml", "???")
 	assert.Nil(t, err)
 	//assert.Equal(t, "yeehaw", result)
 	_ = result.WriteYaml("test_fixtures/yeehaw.yaml")
+}
+
+func TestGithubActionsGeneration1(t *testing.T) {
+	cmd := "github.com/itura/fun/cmd/build@v0.1.23"
+	configPath := "pipeline.yaml"
+	cases := []struct {
+		name     string
+		config   PipelineConfigRaw
+		expected GitHubActionsWorkflow
+	}{
+		{
+			name: "it generates a valid workflow",
+			config: PipelineConfigRaw{
+				Name:      "my build",
+				Resources: ValidResources(),
+				Artifacts: []ArtifactConfig{
+					{Id: "api", Path: "pkg/api"},
+				},
+				Applications: []ApplicationConfig{{
+					Id:   "infra",
+					Type: applicationTypeTerraform,
+					Path: "tf/main",
+				}, {
+					Id:           "website",
+					Type:         applicationTypeHelm,
+					Path:         "helm/website",
+					Namespace:    "postgres",
+					Artifacts:    []string{"api"},
+					Dependencies: []string{"infra"},
+					Values: []RuntimeArg{
+						{Key: "domain", Value: "http://yeehaw.com"},
+					},
+					Secrets: []SecretConfig{
+						{Key: "postgres.password", SecretName: "pg-password"},
+						{Key: "postgres.adminPassword", SecretName: "pg-admin-password"},
+					},
+				}},
+			},
+			expected: NewGitHubActionsWorkflow("my build").
+				SetJob("build-api", NewGitHubActionsJob("Build api").
+					AddSteps(
+						CheckoutRepoStep(),
+						SetupGoStep(),
+						GcpAuthStep("${{ secrets.it me }}", "${{ secrets.yeehaw@yahoo.com }}"),
+						ConfigureGcloudCliStep(),
+						ConfigureGcloudDockerStep("us"),
+						BuildArtifactStep("api", configPath, cmd),
+					),
+				).
+				SetJob("deploy-infra", NewGitHubActionsJob("Deploy infra").
+					AddSteps(
+						CheckoutRepoStep(),
+						SetupGoStep(),
+						GcpAuthStep("${{ secrets.it me }}", "${{ secrets.yeehaw@yahoo.com }}"),
+						GetSetupTerraformStep(),
+						GetDeployStep("infra", nil, GetDeployRunCommand("infra", cmd, configPath)),
+					),
+				).
+				SetJob("deploy-website", NewGitHubActionsJob("Deploy website").
+					AddNeeds("build-api", "deploy-infra").
+					AddSteps(
+						CheckoutRepoStep(),
+						SetupGoStep(),
+						GcpAuthStep("${{ secrets.it me }}", "${{ secrets.yeehaw@yahoo.com }}"),
+						FetchGcpSecretsStep("gcp-cool-proj", "cool-proj", "pg-admin-password"),
+						GetSetupGkeStep(ClusterConfig{
+							Name:     "cluster",
+							Location: "new zealand",
+							Type:     "gke",
+						}),
+						GetSetupHelmStep(),
+						GetDeployStep(
+							"website",
+							[]RuntimeArg{
+								{Key: "domain", Value: "http://yeehaw.com"},
+								{Key: "postgres.password", Value: "${{ secrets.pg-password }}"},
+								{Key: "postgres.adminPassword", Value: "${{ steps.secrets-gcp-cool-proj.outputs.pg-admin-password }}"},
+							},
+							GetDeployRunCommand("website", cmd, configPath),
+						),
+					),
+				),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := ParseConfigForGeneration(tc.config, configPath, cmd)
+			assert.Nil(t, err)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
 }
 
 func TestCloudProviderValidations(t *testing.T) {
@@ -139,42 +231,7 @@ func TestCloudProviderValidations(t *testing.T) {
 }
 
 func TestResourcesValidation(t *testing.T) {
-	resources := Resources{
-		SecretProviders: SecretProviderConfigs{
-			SecretProviderConfig{
-				Id:     "github",
-				Type:   secretProviderTypeGithub,
-				Config: nil,
-				SecretNames: []string{
-					"yeehaw",
-				},
-			},
-			SecretProviderConfig{
-				Id:   "gcp-cool-proj",
-				Type: secretProviderTypeGcp,
-				Config: fun.Config[string]{
-					"project": "cool-proj",
-				},
-				SecretNames: []string{
-					"hoowee",
-				},
-			},
-		},
-		CloudProvider: CloudProviderConfig{
-			Type: cloudProviderTypeGcp,
-			Config: fun.NewConfig[string]().
-				Set("serviceAccount", "yeehaw@yahoo.com").
-				Set("workloadIdentityProvider", "it me"),
-		},
-		ArtifactRepository: ArtifactRepository{
-			Host: "us",
-			Name: "repo",
-		},
-		KubernetesCluster: ClusterConfig{
-			Name:     "cluster",
-			Location: "new zealand",
-		},
-	}
+	resources := ValidResources()
 
 	errs := resources.Validate("resources")
 	assert.Equal(t, false, errs.IsPresent())

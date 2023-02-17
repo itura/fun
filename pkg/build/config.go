@@ -50,13 +50,15 @@ func readFile(configPath string) (PipelineConfigRaw, error) {
 }
 
 type PipelineConfigRaw struct {
-	Name      string    `validate:"required"`
-	Resources Resources `validate:"required"`
-	Artifacts []struct {
-		Id   string
-		Path string
-	}
+	Name         string    `validate:"required"`
+	Resources    Resources `validate:"required"`
+	Artifacts    []ArtifactConfig
 	Applications []ApplicationConfig
+}
+
+type ArtifactConfig struct {
+	Id   string
+	Path string
 }
 
 type ApplicationConfig struct {
@@ -96,8 +98,9 @@ func (c ClusterConfig) Validate(key string) ValidationErrors {
 }
 
 type ArtifactRepository struct {
-	Host string `validate:"required"`
-	Name string `validate:"required"`
+	Host string                 `validate:"required"`
+	Name string                 `validate:"required"`
+	Type ArtifactRepositoryType `validate:"required"`
 }
 
 func (a ArtifactRepository) Validate(key string) ValidationErrors {

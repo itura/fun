@@ -27,15 +27,19 @@ func validateConfig(config PipelineConfigRaw) ValidationErrors {
 	return allValidationErrors
 }
 
-func ParseConfigForGeneration(configPath string, cmd string) (WorkflowWriter, error) {
+func ReadConfigForGeneration(configPath string, cmd string) (WorkflowWriter, error) {
 	config, err := readFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("shucks")
 	}
 
+	return ParseConfigForGeneration(config, configPath, cmd)
+}
+
+func ParseConfigForGeneration(config PipelineConfigRaw, configPath string, cmd string) (WorkflowWriter, error) {
 	validationErrors := validateConfig(config)
 	if validationErrors.IsPresent() {
-		return nil, err
+		return nil, validationErrors
 	}
 
 	buildType := "github"
@@ -64,7 +68,7 @@ type GithubActionsFactory struct {
 	dependencies Dependencies
 }
 
-func (g GithubActionsFactory) Create() GitHubActionsWorkflow {
+func (g GithubActionsFactory) getCommonSetupSteps() []GitHubActionsStep {
 	commonSetupSteps := []GitHubActionsStep{}
 	commonSetupSteps = append(
 		commonSetupSteps,
@@ -75,34 +79,21 @@ func (g GithubActionsFactory) Create() GitHubActionsWorkflow {
 		commonSetupSteps,
 		g.GetCloudProviderSteps()...,
 	)
+	return commonSetupSteps
+}
 
-	jobs := map[string]GitHubActionsJob{}
-	//for _, artifact := range g.config.Artifacts {
-	//	applicationSteps := make([]GitHubActionsStep, len(commonSetupSteps))
-	//	copy(applicationSteps, commonSetupSteps)
-	//}
+func (g GithubActionsFactory) Create() GitHubActionsWorkflow {
+	workflow := NewGitHubActionsWorkflow(g.config.Name)
+	for _, artifact := range g.config.Artifacts {
+		jobId := g.dependencies.GetJobId(artifact.Id)
+		workflow = workflow.SetJob(jobId, g.GetArtifactJob(artifact))
+	}
+
 	for _, application := range g.config.Applications {
-		applicationSteps := make([]GitHubActionsStep, len(commonSetupSteps))
-		copy(applicationSteps, commonSetupSteps)
-
-		applicationSteps = append(
-			applicationSteps,
-			g.GetDeploySteps(application, g.configPath, g.cmd)...,
-		)
-
 		jobId := g.dependencies.GetJobId(application.Id)
-		jobs[jobId] = GetGitHubActionsJob(application.Id, applicationSteps, g.dependencies)
+		workflow = workflow.SetJob(jobId, g.GetApplicationJob(application))
 	}
-	return GitHubActionsWorkflow{
-		Name: g.config.Name,
-		On: map[string]GitHubActionsTriggerEvent{
-			"push": {
-				Branches: []string{"trunk"},
-			},
-		},
-		Jobs: jobs,
-	}
-
+	return workflow
 }
 
 func (g GithubActionsFactory) GetCloudProviderSteps() []GitHubActionsStep {
@@ -118,9 +109,30 @@ func (g GithubActionsFactory) GetCloudProviderSteps() []GitHubActionsStep {
 	}
 }
 
-func (g GithubActionsFactory) GetDeploySteps(application ApplicationConfig, configPath string, cmd string) []GitHubActionsStep {
+func (g GithubActionsFactory) GetArtifactJob(artifact ArtifactConfig) GitHubActionsJob {
+	steps := g.getCommonSetupSteps()
 
-	var steps []GitHubActionsStep
+	repoConfig := g.config.Resources.ArtifactRepository
+	switch repoConfig.Type {
+	case artifactRepositoryTypeGcpDocker:
+		steps = append(steps,
+			ConfigureGcloudCliStep(),
+			ConfigureGcloudDockerStep(repoConfig.Host),
+			BuildArtifactStep(artifact.Id, g.configPath, g.cmd),
+		)
+	default:
+		t, _ := ArtifactRepositoryTypeEnum.ToString(repoConfig.Type)
+		panic(t + "is not a valid type")
+	}
+
+	return NewGitHubActionsJob("Build " + artifact.Id).
+		AddNeeds(g.dependencies.GetUpstreamJobIds(artifact.Id)...).
+		AddSteps(steps...)
+}
+
+func (g GithubActionsFactory) GetApplicationJob(application ApplicationConfig) GitHubActionsJob {
+	steps := g.getCommonSetupSteps()
+
 	var runTimeArgs []RuntimeArg
 	for _, arg := range application.Values {
 		runTimeArgs = append(runTimeArgs, RuntimeArg{
@@ -188,19 +200,11 @@ func (g GithubActionsFactory) GetDeploySteps(application ApplicationConfig, conf
 		panic("😅")
 	}
 
-	steps = append(steps, GetDeployStep(application.Id, runTimeArgs, GetDeployRunCommand(application.Id, configPath, cmd)))
+	steps = append(steps, GetDeployStep(application.Id, runTimeArgs, GetDeployRunCommand(application.Id, g.cmd, g.configPath)))
 
-	return steps
-}
-
-func (g GithubActionsFactory) GetArtifactRepositoryProvider(t string) ArtifactRepositoryProvider[GitHubActionsStep] {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (g GithubActionsFactory) GetKubernetesProvider(t string) KubernetesProvider[GitHubActionsStep] {
-	//TODO implement me
-	panic("implement me")
+	return NewGitHubActionsJob("Deploy " + application.Id).
+		AddNeeds(g.dependencies.GetUpstreamJobIds(application.Id)...).
+		AddSteps(steps...)
 }
 
 func (g GithubActionsFactory) resolveStepOutput(stepId string, outputId string) string {

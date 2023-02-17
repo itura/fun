@@ -18,9 +18,9 @@ func (a Application) ToGitHubActionsJob(cmd string, configPath string, dependenc
 	}
 }
 
-func GetGitHubActionsJob(id string, steps []GitHubActionsStep, dependencies Dependencies) GitHubActionsJob {
+func GetGitHubActionsJob(id string, name string, steps []GitHubActionsStep, dependencies Dependencies) GitHubActionsJob {
 	return GitHubActionsJob{
-		Name:   "Deploy " + id,
+		Name:   name,
 		RunsOn: "ubuntu-latest",
 		Permissions: map[string]string{
 			"id-token": "write",

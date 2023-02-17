@@ -4,6 +4,7 @@ resources:
   artifactRepository:
     host: us-central1-docker.pkg.dev
     name: gcp-project/repo-name
+    type: gcp-docker
   kubernetesCluster:
     name: cluster-name
     location: uscentral1

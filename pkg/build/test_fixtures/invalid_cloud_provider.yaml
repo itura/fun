@@ -3,6 +3,7 @@ name: My Build
 resources:
   artifactRepository:
     name: gcp-project/repo-name
+    type: gcp-docker
 
   secretProviders:
     - type: gcp

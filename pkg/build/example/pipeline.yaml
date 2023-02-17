@@ -3,10 +3,12 @@ name: TMTY CI/CD
 resources:
   artifactRepository:
     host: us-central1-docker.pkg.dev
+    type: gcp-docker
     name: repo-name
   kubernetesCluster:
     name: cluster-name
     location: uscentral1
+    type: gke
   secretProviders:
     - type: gcp
       id: gcp-project

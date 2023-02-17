@@ -5,6 +5,47 @@ import (
 	"github.com/itura/fun/pkg/fun"
 )
 
+func ValidResources() Resources {
+	return Resources{
+		SecretProviders: SecretProviderConfigs{
+			SecretProviderConfig{
+				Id:     "github",
+				Type:   secretProviderTypeGithub,
+				Config: nil,
+				SecretNames: []string{
+					"pg-password",
+				},
+			},
+			SecretProviderConfig{
+				Id:   "gcp-cool-proj",
+				Type: secretProviderTypeGcp,
+				Config: fun.Config[string]{
+					"project": "cool-proj",
+				},
+				SecretNames: []string{
+					"pg-admin-password",
+				},
+			},
+		},
+		CloudProvider: CloudProviderConfig{
+			Type: cloudProviderTypeGcp,
+			Config: fun.NewConfig[string]().
+				Set("serviceAccount", "yeehaw@yahoo.com").
+				Set("workloadIdentityProvider", "it me"),
+		},
+		ArtifactRepository: ArtifactRepository{
+			Host: "us",
+			Name: "repo",
+			Type: artifactRepositoryTypeGcpDocker,
+		},
+		KubernetesCluster: ClusterConfig{
+			Name:     "cluster",
+			Location: "new zealand",
+			Type:     "gke",
+		},
+	}
+}
+
 func ValidPipelineConfig(builder TestBuilder) PipelineConfig {
 	artifactApi := builder.Artifact("api", "packages/api")
 	artifactClient := builder.Artifact("client", "packages/client")

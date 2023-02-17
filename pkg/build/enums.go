@@ -64,6 +64,25 @@ func (s *SecretProviderType) UnmarshalYAML(
 	return SecretProviderTypeEnum.Unmarshal(unmarshal, s)
 }
 
+type ArtifactRepositoryType uint
+
+const (
+	artifactRepositoryTypeNil ArtifactRepositoryType = iota
+	artifactRepositoryTypeGcpDocker
+)
+
+var (
+	ArtifactRepositoryTypeEnum = NewEnum[ArtifactRepositoryType](map[ArtifactRepositoryType]string{
+		artifactRepositoryTypeGcpDocker: "gcp-docker",
+	})
+)
+
+func (s *ArtifactRepositoryType) UnmarshalYAML(
+	unmarshal func(interface{}) error,
+) error {
+	return ArtifactRepositoryTypeEnum.Unmarshal(unmarshal, s)
+}
+
 type Enum[T comparable] struct {
 	keyToValue map[T]string
 	valueToKey map[string]T

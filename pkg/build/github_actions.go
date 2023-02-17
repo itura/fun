@@ -18,6 +18,23 @@ type GitHubActionsWorkflow struct {
 	Jobs map[string]GitHubActionsJob
 }
 
+func NewGitHubActionsWorkflow(name string) GitHubActionsWorkflow {
+	return GitHubActionsWorkflow{
+		Name: name,
+		On: map[string]GitHubActionsTriggerEvent{
+			"push": {
+				Branches: []string{"trunk"},
+			},
+		},
+		Jobs: map[string]GitHubActionsJob{},
+	}
+}
+
+func (g GitHubActionsWorkflow) SetJob(id string, job GitHubActionsJob) GitHubActionsWorkflow {
+	g.Jobs[id] = job
+	return g
+}
+
 func (g GitHubActionsWorkflow) WriteYaml(path string) error {
 	file, err := os.Create(path)
 	if err != nil {
@@ -36,6 +53,27 @@ type GitHubActionsJob struct {
 	Permissions map[string]string
 	Needs       []string `yaml:"needs,omitempty"`
 	Steps       []GitHubActionsStep
+}
+
+func NewGitHubActionsJob(name string) GitHubActionsJob {
+	return GitHubActionsJob{
+		Name:   name,
+		RunsOn: "ubuntu-latest",
+		Permissions: map[string]string{
+			"id-token": "write",
+			"contents": "read",
+		},
+	}
+}
+
+func (g GitHubActionsJob) AddNeeds(needs ...string) GitHubActionsJob {
+	g.Needs = append(g.Needs, needs...)
+	return g
+}
+
+func (g GitHubActionsJob) AddSteps(steps ...GitHubActionsStep) GitHubActionsJob {
+	g.Steps = append(g.Steps, steps...)
+	return g
 }
 
 type GitHubActionsStep struct {
@@ -99,5 +137,31 @@ func FetchGcpSecretsStep(id string, project string, secretNames ...string) GitHu
 		With: map[string]interface{}{
 			"secrets": strings.Join(formattedSecretNames, "\n"),
 		},
+	}
+}
+
+func ConfigureGcloudCliStep() GitHubActionsStep {
+	return GitHubActionsStep{
+		Name: "Configure GCloud SDK",
+		Uses: "google-github-actions/setup-gcloud@v0",
+	}
+}
+func ConfigureGcloudDockerStep(host string) GitHubActionsStep {
+	return GitHubActionsStep{
+		Name: "Configure Docker",
+		Run:  fmt.Sprintf("gcloud --quiet auth configure-docker %s", host),
+	}
+}
+
+func BuildArtifactStep(id string, configPath string, cmd string) GitHubActionsStep {
+	return GitHubActionsStep{
+		Name: fmt.Sprintf("Build %s", id),
+		Run: strings.Join(
+			[]string{
+				fmt.Sprintf("go run %s build-artifact %s", cmd, id),
+				fmt.Sprintf("--config %s", configPath),
+				"--current-sha $GITHUB_SHA",
+			}, " \\\n  ",
+		),
 	}
 }
