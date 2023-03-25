@@ -30,8 +30,8 @@ func ValidResources() Resources {
 		CloudProvider: CloudProviderConfig{
 			Type: cloudProviderTypeGcp,
 			Config: fun.NewConfig[string]().
-				Set("serviceAccount", "yeehaw@yahoo.com").
-				Set("workloadIdentityProvider", "it me"),
+				Set("serviceAccount", "SERVICE_ACCOUNT").
+				Set("workloadIdentityProvider", "WORKLOAD_IDENTITY_PROVIDER"),
 		},
 		ArtifactRepository: ArtifactRepository{
 			Host: "us",

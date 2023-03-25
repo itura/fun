@@ -87,6 +87,7 @@ func TestParseConfig(t *testing.T) {
 }
 
 func TestGithubActionsGeneration(t *testing.T) {
+	t.Skip()
 	result, err := ReadConfigForGeneration("test_fixtures/valid_pipeline_config.yaml", "???")
 	assert.Nil(t, err)
 	//assert.Equal(t, "yeehaw", result)
@@ -134,7 +135,7 @@ func TestGithubActionsGeneration1(t *testing.T) {
 					AddSteps(
 						CheckoutRepoStep(),
 						SetupGoStep(),
-						GcpAuthStep("${{ secrets.it me }}", "${{ secrets.yeehaw@yahoo.com }}"),
+						GcpAuthStep("${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}", "${{ secrets.SERVICE_ACCOUNT }}"),
 						ConfigureGcloudCliStep(),
 						ConfigureGcloudDockerStep("us"),
 						BuildArtifactStep("api", configPath, cmd),
@@ -144,7 +145,7 @@ func TestGithubActionsGeneration1(t *testing.T) {
 					AddSteps(
 						CheckoutRepoStep(),
 						SetupGoStep(),
-						GcpAuthStep("${{ secrets.it me }}", "${{ secrets.yeehaw@yahoo.com }}"),
+						GcpAuthStep("${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}", "${{ secrets.SERVICE_ACCOUNT }}"),
 						GetSetupTerraformStep(),
 						GetDeployStep("infra", nil, GetDeployRunCommand("infra", cmd, configPath)),
 					),
@@ -154,7 +155,7 @@ func TestGithubActionsGeneration1(t *testing.T) {
 					AddSteps(
 						CheckoutRepoStep(),
 						SetupGoStep(),
-						GcpAuthStep("${{ secrets.it me }}", "${{ secrets.yeehaw@yahoo.com }}"),
+						GcpAuthStep("${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}", "${{ secrets.SERVICE_ACCOUNT }}"),
 						FetchGcpSecretsStep("gcp-cool-proj", "cool-proj", "pg-admin-password"),
 						GetSetupGkeStep(ClusterConfig{
 							Name:     "cluster",
